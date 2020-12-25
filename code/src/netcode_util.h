@@ -2,7 +2,7 @@
 #define H_NETCODE_UTIL
 
 #define NETCODE_UTIL_LOG(...)       do {\
-   printf (stderr, "[%s:%i] ", __FILE__, __LINE__);\
+   printf ("[%s:%i] ", __FILE__, __LINE__);\
    printf (__VA_ARGS__);\
 } while (0)
 
