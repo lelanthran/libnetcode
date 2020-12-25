@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "netcode_util.h"
 #include "netcode_tcp.h"
 #include "netcode_udp.h"
 
