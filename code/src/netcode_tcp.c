@@ -222,6 +222,7 @@ int netcode_tcp_close (int fd)
     * 1. Call close() on the socket descriptor
     */
    SAFETY_CHECK;
+   shutdown (fd, SHUT_RDWR);
    return close (fd);
 }
 

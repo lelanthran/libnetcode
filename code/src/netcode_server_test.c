@@ -12,24 +12,25 @@ int main (void)
    int ret = EXIT_FAILURE;
    int listenfd = -1, clientfd = -1;
    size_t rxlen = 8192;
-   char *rx = malloc (rxlen - 1);
+   char *rx = malloc (rxlen);
    char *expected = NETCODE_TEST_TCP_REQUEST;
    size_t expected_len = strlen (NETCODE_TEST_TCP_REQUEST);
-   char *client_ip;
+   char *client_ip = NULL;
    uint16_t client_port;
    size_t nbytes = 0;
 
-   printf ("Netcode server test.\n");
+   printf ("SERVER: Netcode server test.\n");
 
    if (!rx) {
       NETCODE_UTIL_LOG ("Failed to allocate %zu bytes for response\n",
                         rxlen);
    }
    memset (rx, 0, rxlen);
+   rxlen--;
 
    netcode_tcp_clear_errno ();
 
-   printf ("Listening on [%u] ... ", NETCODE_TEST_PORT);
+   printf ("SERVER: Listening on [%u] ... ", NETCODE_TEST_PORT);
 
    if ((listenfd = netcode_tcp_server (NETCODE_TEST_PORT))<0) {
       NETCODE_UTIL_LOG ("Failed to listen: [%i:%s].\n",
@@ -38,9 +39,9 @@ int main (void)
       goto errorexit;
    }
 
-   printf (" listening on fd [%i]\n", listenfd);
+   printf ("SERVER:  listening on fd [%i]\n", listenfd);
 
-   printf ("Waiting for connection (max 5 seconds) ... ");
+   printf ("SERVER: Waiting for connection (max 5 seconds) ... ");
    if ((clientfd = netcode_tcp_accept (listenfd, 5, &client_ip, &client_port))<0) {
       NETCODE_UTIL_LOG ("Timed out waiting for client to connect: [%i%s].\n",
                          netcode_tcp_errno (),
@@ -48,9 +49,14 @@ int main (void)
       goto errorexit;
    }
 
-   printf (" [%s:%u] connection received.\n", client_ip, client_port);
+   if (clientfd == 0) {
+      NETCODE_UTIL_LOG ("Timed out waiting for client\n");
+      goto errorexit;
+   }
 
-   printf ("Waiting for incoming data (max 5 seconds) ... ");
+   printf ("SERVER:  [%s:%u] connection received.\n", client_ip, client_port);
+
+   printf ("SERVER: Waiting for incoming data (max 5 seconds) ... ");
 
    if ((nbytes = netcode_tcp_read (clientfd, rx, rxlen, 5))!=expected_len) {
       NETCODE_UTIL_LOG ("Failed to receive %zu bytes, got %zu instead.\n",
@@ -58,7 +64,7 @@ int main (void)
       goto errorexit;
    }
 
-   printf ("received %zu bytes [%s].\n", nbytes, rx);
+   printf ("SERVER: received %zu bytes [%s].\n", nbytes, rx);
 
    if ((strcmp (rx, NETCODE_TEST_TCP_REQUEST))!=0) {
       NETCODE_UTIL_LOG ("Unexpected request: expected [%s], got [%s] instead.\n",
@@ -74,8 +80,10 @@ int main (void)
       goto errorexit;
    }
 
-   printf ("Transmitted %zu bytes [%s] ...\n", txlen, tx);
-   sleep (5);
+   printf ("SERVER: Transmitted %zu bytes [%s] ...\n", txlen, tx);
+   printf ("SERVER: Waiting 10 seconds to ensure that the socket is flushed\n");
+
+   netcode_tcp_read (clientfd, rx, rxlen, 10);
 
    ret = EXIT_SUCCESS;
 

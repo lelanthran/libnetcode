@@ -11,21 +11,22 @@ int main (void)
    int ret = EXIT_FAILURE;
    int fd = -1;
    size_t rxlen = 8192;
-   char *rx = malloc (rxlen - 1);
+   char *rx = malloc (rxlen);
    char *expected = NETCODE_TEST_TCP_RESPONSE;
    size_t expected_len = strlen (NETCODE_TEST_TCP_RESPONSE);
 
-   printf ("Netcode client test.\n");
+   printf ("CLIENT: Netcode client test.\n");
 
    if (!rx) {
       NETCODE_UTIL_LOG ("Failed to allocate %zu bytes for response\n",
                         rxlen);
    }
    memset (rx, 0, rxlen);
+   rxlen--;
 
    netcode_tcp_clear_errno ();
 
-   printf ("Connecting to [%s:%u] ... ", NETCODE_TEST_SERVER, NETCODE_TEST_PORT);
+   printf ("CLIENT: Connecting to [%s:%u] ... ", NETCODE_TEST_SERVER, NETCODE_TEST_PORT);
 
    if ((fd = netcode_tcp_connect (NETCODE_TEST_SERVER, NETCODE_TEST_PORT))==-1) {
       NETCODE_UTIL_LOG ("Failed to connect: [%i:%s].\n",
@@ -34,7 +35,7 @@ int main (void)
       goto errorexit;
    }
 
-   printf (" connected [%i]\n", fd);
+   printf ("CLIENT:  connected [%i]\n", fd);
 
    const char *tx = NETCODE_TEST_TCP_REQUEST;
    size_t txlen = strlen (tx);
@@ -46,7 +47,7 @@ int main (void)
       goto errorexit;
    }
 
-   printf ("Transmitted %zu bytes [%s] ...\n", txlen, tx);
+   printf ("CLIENT: Transmitted %zu bytes [%s] ...\n", txlen, tx);
 
    if ((nbytes = netcode_tcp_read (fd, rx, rxlen, 5))!=expected_len) {
       NETCODE_UTIL_LOG ("Failed to receive %zu bytes, got %zu instead.\n",
@@ -54,7 +55,7 @@ int main (void)
       goto errorexit;
    }
 
-   printf ("Received %zu bytes [%s].\n", nbytes, rx);
+   printf ("CLIENT: Received %zu bytes [%s].\n", nbytes, rx);
 
    if ((strcmp (rx, NETCODE_TEST_TCP_RESPONSE))!=0) {
       NETCODE_UTIL_LOG ("Unexpected response: expected [%s], got [%s] instead.\n",

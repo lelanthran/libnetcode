@@ -17,6 +17,9 @@ extern "C" {
    /* Accept a client connection on a listening fd. If addr is not NULL, then
     * it is allocated and filled with the IP address of the remote peer. If
     * port is not NULL then is it filled with the port of the remote peer.
+    *
+    * On error -1 is returned. On timeout zero is returned. On success a non-zero
+    * file descriptor is returned.
     */
    int netcode_tcp_accept (int fd, size_t timeout, char **addr, uint16_t *port);
 
