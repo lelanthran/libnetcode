@@ -15,14 +15,16 @@ int main (void)
    char *expected = NETCODE_TEST_TCP_RESPONSE;
    size_t expected_len = strlen (NETCODE_TEST_TCP_RESPONSE);
 
+   printf ("Netcode client test.\n");
+
    if (!rx) {
       NETCODE_UTIL_LOG ("Failed to allocate %zu bytes for response\n",
                         rxlen);
    }
+   memset (rx, 0, rxlen);
 
    netcode_tcp_clear_errno ();
 
-   printf ("Netcode client test.\n");
    printf ("Connecting to [%s:%u] ... ", NETCODE_TEST_SERVER, NETCODE_TEST_PORT);
 
    if ((fd = netcode_tcp_connect (NETCODE_TEST_SERVER, NETCODE_TEST_PORT))==-1) {

@@ -14,6 +14,10 @@ extern "C" {
     */
    int netcode_tcp_server (size_t port);
 
+   /* Accept a client connection on a listening fd. If addr is not NULL, then
+    * it is allocated and filled with the IP address of the remote peer. If
+    * port is not NULL then is it filled with the port of the remote peer.
+    */
    int netcode_tcp_accept (int fd, size_t timeout, char **addr, uint16_t *port);
 
    /* Make a connection to the specified server on the specified port.
