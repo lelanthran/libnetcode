@@ -6,7 +6,9 @@
 #include "netcode_tcp.h"
 #include "netcode_udp.h"
 
-int main (void)
+#define TIMEOUT         (10)
+
+static int tcp_test (void)
 {
    int ret = EXIT_FAILURE;
    int fd = -1;
@@ -15,7 +17,7 @@ int main (void)
    char *expected = NETCODE_TEST_TCP_RESPONSE;
    size_t expected_len = strlen (NETCODE_TEST_TCP_RESPONSE);
 
-   printf ("CLIENT: Netcode client test.\n");
+   printf ("CLIENT-TCP: Netcode client test.\n");
 
    if (!rx) {
       NETCODE_UTIL_LOG ("Failed to allocate %zu bytes for response\n",
@@ -26,7 +28,7 @@ int main (void)
 
    netcode_tcp_clear_errno ();
 
-   printf ("CLIENT: Connecting to [%s:%u] ... ", NETCODE_TEST_SERVER, NETCODE_TEST_PORT);
+   printf ("CLIENT-TCP: Connecting to [%s:%u] ... ", NETCODE_TEST_SERVER, NETCODE_TEST_PORT);
 
    if ((fd = netcode_tcp_connect (NETCODE_TEST_SERVER, NETCODE_TEST_PORT))==-1) {
       NETCODE_UTIL_LOG ("Failed to connect: [%i:%s].\n",
@@ -35,7 +37,7 @@ int main (void)
       goto errorexit;
    }
 
-   printf ("CLIENT:  connected [%i]\n", fd);
+   printf ("CLIENT-TCP:  connected [%i]\n", fd);
 
    const char *tx = NETCODE_TEST_TCP_REQUEST;
    size_t txlen = strlen (tx);
@@ -47,15 +49,15 @@ int main (void)
       goto errorexit;
    }
 
-   printf ("CLIENT: Transmitted %zu bytes [%s] ...\n", txlen, tx);
+   printf ("CLIENT-TCP: Transmitted %zu bytes [%s] ...\n", txlen, tx);
 
-   if ((nbytes = netcode_tcp_read (fd, rx, rxlen, 5))!=expected_len) {
+   if ((nbytes = netcode_tcp_read (fd, rx, rxlen, TIMEOUT))!=expected_len) {
       NETCODE_UTIL_LOG ("Failed to receive %zu bytes, got %zu instead.\n",
                          expected_len, nbytes);
       goto errorexit;
    }
 
-   printf ("CLIENT: Received %zu bytes [%s].\n", nbytes, rx);
+   printf ("CLIENT-TCP: Received %zu bytes [%s].\n", nbytes, rx);
 
    if ((strcmp (rx, NETCODE_TEST_TCP_RESPONSE))!=0) {
       NETCODE_UTIL_LOG ("Unexpected response: expected [%s], got [%s] instead.\n",
@@ -72,4 +74,18 @@ errorexit:
    return ret;
 }
 
+int main (void)
+{
+   int ret = EXIT_FAILURE;
+
+   if ((ret = tcp_test ())!=EXIT_SUCCESS) {
+      NETCODE_UTIL_LOG ("CLIENT-TCP: Test failed\n");
+      goto errorexit;
+   }
+
+   ret = EXIT_SUCCESS;
+
+errorexit:
+   return ret;
+}
 
