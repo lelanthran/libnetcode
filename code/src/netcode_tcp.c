@@ -110,17 +110,17 @@ int netcode_tcp_server (size_t port)
    }
    fd = socket (AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
    if (fd<0) {
-      NETCODE_UTIL_LOG ("socket() failed\n");
+      // NETCODE_UTIL_LOG ("socket() failed\n");
       return -1;
    }
 
    if (bind (fd, (struct sockaddr *)&addr, sizeof addr)!=0) {
-      NETCODE_UTIL_LOG ("bind() failed\n");
+      // NETCODE_UTIL_LOG ("bind() failed\n");
       close (fd); fd = -1;
       return -1;
    }
    if (listen (fd, 1)!=0) {
-      NETCODE_UTIL_LOG ("listen() failed\n");
+      // NETCODE_UTIL_LOG ("listen() failed\n");
       close (fd); fd = -1;
       return -1;
    }
@@ -199,6 +199,11 @@ int netcode_tcp_connect (const char *server, size_t port)
    addr.sin_family = AF_INET;
    addr.sin_port = htons (port);
    addr.sin_addr.s_addr = inet_addr (server);
+
+   if (!serv_addr) {
+      return -1;
+   }
+
    memcpy (&addr.sin_addr.s_addr, serv_addr->h_addr_list[0],
          sizeof addr.sin_addr.s_addr);
 
@@ -229,7 +234,7 @@ int netcode_tcp_close (int fd)
 size_t netcode_tcp_write (int fd, const void *buf, size_t len)
 {
    SAFETY_CHECK;
-   NETCODE_UTIL_LOG ("sending %zu bytes\n", len);
+   // NETCODE_UTIL_LOG ("sending %zu bytes\n", len);
    ssize_t retval = SEND (fd, buf, len);
    if (retval<0) return (size_t)-1;
    return retval;
@@ -248,7 +253,7 @@ size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout)
                SOL_SOCKET, SO_ERROR, &error_code, &error_code_len);
    if (error_code!=0) return (size_t)-1;
    SAFETY_CHECK;
-   NETCODE_UTIL_LOG ("Attempting to read %zu bytes\n", len);
+   // NETCODE_UTIL_LOG ("Attempting to read %zu bytes\n", len);
    do {
       fd_set fds;
       FD_ZERO (&fds);
@@ -266,7 +271,7 @@ size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout)
          if (r ==  0) return idx ? idx : (size_t)-1;
 
          idx += (size_t)r;
-         NETCODE_UTIL_LOG ("read %zu bytes\n", idx);
+         // NETCODE_UTIL_LOG ("read %zu bytes\n", idx);
       }
       if (selresult==0) {
          countdown--;
@@ -283,18 +288,19 @@ int netcode_tcp_clear_errno (void)
 {
    SAFETY_CHECK;
    errno = 0;
+   h_errno = 0;
    return 0;
 }
 
 int netcode_tcp_errno (void)
 {
    SAFETY_CHECK;
-   return errno;
+   return errno ? errno : h_errno;
 }
 
 const char *netcode_tcp_strerror (int err)
 {
    SAFETY_CHECK;
-   return strerror (err);
+   return errno ? strerror (err) : hstrerror (err);
 }
 
