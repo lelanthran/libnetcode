@@ -32,9 +32,9 @@ static int tcp_test (void)
 
    netcode_tcp_clear_errno ();
 
-   printf ("SERVER-TCP: Listening on [%u] ... ", NETCODE_TEST_PORT);
+   printf ("SERVER-TCP: Listening on [%u] ... ", NETCODE_TEST_TCP_PORT);
 
-   if ((listenfd = netcode_tcp_server (NETCODE_TEST_PORT))<0) {
+   if ((listenfd = netcode_tcp_server (NETCODE_TEST_TCP_PORT))<0) {
       NETCODE_UTIL_LOG ("Failed to listen: [%i:%s].\n",
                          netcode_tcp_errno (),
                          netcode_tcp_strerror (netcode_tcp_errno ()));
@@ -104,7 +104,72 @@ errorexit:
 
 int udp_test (void)
 {
-   return EXIT_FAILURE;
+   int ret = EXIT_FAILURE;
+   uint8_t *rxdata = NULL;
+   char *remote_ip = NULL;
+   char *tmp = NULL;
+   size_t rxlen = 0;
+   size_t rc = 0;
+   int udp_socket = -1;
+
+   printf ("SERVER-UDP: Setting up datagram socket ... ");
+
+   udp_socket = netcode_udp_socket (NETCODE_TEST_UDP_PORT, NULL);
+
+   printf ("done.\nSERVER-UDP: Waiting for incoming datagram ... ");
+
+   rc = netcode_udp_wait (udp_socket, &remote_ip, &rxdata, &rxlen, TIMEOUT);
+
+   printf ("done\n");
+
+   if (rc == (size_t)-1) {
+      NETCODE_UTIL_LOG ("SERVER-UDP: Error %i waiting for datagram: %s\n",
+                        netcode_udp_errno (),
+                        netcode_udp_strerror (netcode_udp_errno ()));
+      goto errorexit;
+   }
+
+   if (rc == 0) {
+      NETCODE_UTIL_LOG ("SERVER-UDP: Timed out waiting for datagram\n");
+      goto errorexit;
+   }
+
+   printf ("SERVER-UDP: Received %zu/%zu bytes from [%s]\n",
+           rc, rxlen, remote_ip);
+
+   if ((memcmp (NETCODE_TEST_UDP_REQUEST, rxdata, rxlen))!=0) {
+      if (!(tmp = calloc (1, rxlen + 1))) {
+         NETCODE_UTIL_LOG ("OOM error\n");
+         goto errorexit;
+      }
+      memcpy (tmp, rxdata, rxlen);
+
+      NETCODE_UTIL_LOG ("SERVER-UDP: incorrect data rxed [%s]\n",
+                        tmp);
+      goto errorexit;
+   }
+
+   printf ("SERVER-UDP: Received [%s]\n", rxdata);
+
+   rc = netcode_udp_send (udp_socket, remote_ip,
+                          (uint8_t *)NETCODE_TEST_UDP_RESPONSE,
+                          strlen (NETCODE_TEST_UDP_RESPONSE) + 1);
+   if (rc != (strlen (NETCODE_TEST_UDP_RESPONSE) + 1)) {
+      NETCODE_UTIL_LOG ("SERVER-UDP: Failed to transmit to [%s]\n",
+                        remote_ip);
+      goto errorexit;
+   }
+
+   printf ("SERVER-UDP: Responded with [%s]\n", NETCODE_TEST_UDP_RESPONSE);
+
+   ret = EXIT_SUCCESS;
+
+errorexit:
+   free (tmp);
+   free (rxdata);
+   free (remote_ip);
+
+   return ret;
 }
 
 int main (int argc, char **argv)
@@ -123,6 +188,7 @@ int main (int argc, char **argv)
    for (size_t i=0; argv[1] && i<sizeof tests / sizeof tests[0]; i++) {
       if ((strcmp (tests[i].name, argv[1]))==0) {
          ret = tests[i].fptr ();
+            NETCODE_UTIL_LOG ("CLIENT [%s]: %s\n", tests[i].name, ret ? "failed" : "passed");
          goto errorexit;
       }
    }

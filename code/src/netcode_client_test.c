@@ -28,11 +28,11 @@ static int tcp_test (void)
 
    netcode_tcp_clear_errno ();
 
-   // printf ("CLIENT-TCP: Connecting to [%s:%u] ... ", "example.noname", NETCODE_TEST_PORT);
-   printf ("CLIENT-TCP: Connecting to [%s:%u] ... ", NETCODE_TEST_SERVER, NETCODE_TEST_PORT);
+   // printf ("CLIENT-TCP: Connecting to [%s:%u] ... ", "example.noname", NETCODE_TEST_TCP_PORT);
+   printf ("CLIENT-TCP: Connecting to [%s:%u] ... ", NETCODE_TEST_SERVER, NETCODE_TEST_TCP_PORT);
 
-   // if ((fd = netcode_tcp_connect ("example.noname", NETCODE_TEST_PORT))==-1) {
-   if ((fd = netcode_tcp_connect (NETCODE_TEST_SERVER, NETCODE_TEST_PORT))==-1) {
+   // if ((fd = netcode_tcp_connect ("example.noname", NETCODE_TEST_TCP_PORT))==-1) {
+   if ((fd = netcode_tcp_connect (NETCODE_TEST_SERVER, NETCODE_TEST_TCP_PORT))==-1) {
       NETCODE_UTIL_LOG ("Failed to connect: [%i:%s].\n",
                          netcode_tcp_errno (),
                          netcode_tcp_strerror (netcode_tcp_errno ()));
@@ -78,7 +78,76 @@ errorexit:
 
 int udp_test (void)
 {
-   return EXIT_FAILURE;
+   int ret = EXIT_FAILURE;
+   uint8_t *rxdata = NULL;
+   char *remote_ip = NULL;
+   char *tmp = NULL;
+   size_t rxlen = 0;
+   size_t rc = 0;
+   int udp_socket = -1;
+
+   printf ("CLIENT-UDP: Setting up datagram socket ... ");
+
+   udp_socket = netcode_udp_socket (NETCODE_TEST_UDP_PORT, NETCODE_TEST_SERVER);
+
+   printf ("CLIENT-UDP: sending datagra to [%s] ... ", NETCODE_TEST_SERVER);
+
+   rc = netcode_udp_send (udp_socket, remote_ip,
+                          (uint8_t *)NETCODE_TEST_UDP_RESPONSE,
+                          strlen (NETCODE_TEST_UDP_RESPONSE) + 1);
+
+   if (rc != (strlen (NETCODE_TEST_UDP_RESPONSE) + 1)) {
+      NETCODE_UTIL_LOG ("CLIENT-UDP: Failed to transmit to [%s]\n",
+                        remote_ip);
+      goto errorexit;
+   }
+
+   printf ("done\n");
+
+   printf ("CLIENT-UDP: Waiting for response datagram ... ");
+
+   rc = netcode_udp_wait (udp_socket, &remote_ip, &rxdata, &rxlen, TIMEOUT);
+
+   printf ("done\n");
+
+   if (rc == (size_t)-1) {
+      NETCODE_UTIL_LOG ("CLIENT-UDP: Error %i waiting for datagram: %s\n",
+                        netcode_udp_errno (),
+                        netcode_udp_strerror (netcode_udp_errno ()));
+      goto errorexit;
+   }
+
+   if (rc == 0) {
+      NETCODE_UTIL_LOG ("CLIENT-UDP: Timed out waiting for datagram\n");
+      goto errorexit;
+   }
+
+   printf ("CLIENT-UDP: Received %zu/%zu bytes from [%s]\n",
+           rc, rxlen, remote_ip);
+
+   if ((memcmp (NETCODE_TEST_UDP_RESPONSE, rxdata, rxlen))!=0) {
+      if (!(tmp = calloc (1, rxlen + 1))) {
+         NETCODE_UTIL_LOG ("OOM error\n");
+         goto errorexit;
+      }
+      memcpy (tmp, rxdata, rxlen);
+
+      NETCODE_UTIL_LOG ("CLIENT-UDP: incorrect data rxed [%s]\n",
+                        tmp);
+      goto errorexit;
+   }
+
+   printf ("CLIENT-UDP: Received [%s]\n", rxdata);
+
+   ret = EXIT_SUCCESS;
+
+errorexit:
+   free (tmp);
+   free (rxdata);
+   free (remote_ip);
+
+   return ret;
+
 }
 
 int main (int argc, char **argv)
@@ -97,6 +166,7 @@ int main (int argc, char **argv)
    for (size_t i=0; argv[1] && i<sizeof tests / sizeof tests[0]; i++) {
       if ((strcmp (tests[i].name, argv[1]))==0) {
          ret = tests[i].fptr ();
+         NETCODE_UTIL_LOG ("CLIENT [%s]: %s\n", tests[i].name, ret ? "failed" : "passed");
          goto errorexit;
       }
    }
@@ -107,7 +177,7 @@ int main (int argc, char **argv)
    }
 
    if ((ret = udp_test ())!=EXIT_SUCCESS) {
-      NETCODE_UTIL_LOG ("SERVER-UDP: Test failed\n");
+      NETCODE_UTIL_LOG ("CLIENT-UDP: Test failed\n");
       goto errorexit;
    }
 
