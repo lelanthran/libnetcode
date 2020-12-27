@@ -102,12 +102,38 @@ errorexit:
    return ret;
 }
 
-int main (void)
+int udp_test (void)
+{
+   return EXIT_FAILURE;
+}
+
+int main (int argc, char **argv)
 {
    int ret = EXIT_FAILURE;
+   static const struct {
+      const char *name;
+      int (*fptr) (void);
+   } tests [] = {
+      { "tcp_test", tcp_test },
+      { "udp_test", udp_test },
+   };
+
+   (void) argc;
+
+   for (size_t i=0; argv[1] && i<sizeof tests / sizeof tests[0]; i++) {
+      if ((strcmp (tests[i].name, argv[1]))==0) {
+         ret = tests[i].fptr ();
+         goto errorexit;
+      }
+   }
 
    if ((ret = tcp_test ())!=EXIT_SUCCESS) {
       NETCODE_UTIL_LOG ("SERVER-TCP: Test failed\n");
+      goto errorexit;
+   }
+
+   if ((ret = udp_test ())!=EXIT_SUCCESS) {
+      NETCODE_UTIL_LOG ("SERVER-UDP: Test failed\n");
       goto errorexit;
    }
 
