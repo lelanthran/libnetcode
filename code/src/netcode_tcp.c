@@ -30,26 +30,13 @@
 
 typedef size_t socklen_t;
 
-static WSADATA xp_wsaData;
-static int xp_wsaInitialised = 0;
-static void xp_winInit (void) {
-   if (xp_wsaInitialised > 0)
-      return;
-
-   atexit ((void (*)(void))WSACleanup);
-
-   int result = WSAStartup (MAKEWORD(2,2), &xp_wsaData);
-   if (result!=0) {
-      NETCODE_UTIL_LOG ("Critical: winsock could not be initiliased - %i\n", result);
-   } else {
-      NETCODE_UTIL_LOG ("winsock initialised\n");
-   }
-
-   xp_wsaInitialised = 1;
-}
+static bool initialised = false;
 
 #define SAFETY_CHECK       do {\
-   if (xp_wsaInitialised==0) xp_winInit (); \
+   if (!initialised) {\
+      netcode_init (); \
+      initialised = true;\
+   }\
 } while (0)
 
 #endif
@@ -260,13 +247,13 @@ size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout)
       FD_SET (fd, &fds);
       int selresult = select (fd + 1, &fds, NULL, NULL, &tv);
       if (selresult>0) {
-         netcode_tcp_clear_errno ();
+         netcode_clear_errno ();
          ssize_t r = recv (fd, &buffer[idx], len-idx, MSG_DONTWAIT);
 
          // Return error immediately if an error is detected. Reading zero
          // bytes from a socket that caused a select() to return means
          // that the other side has disconnected.
-         if (netcode_tcp_errno ()) return idx ? idx : (size_t)-1;
+         if (netcode_errno ()) return idx ? idx : (size_t)-1;
          if (r == -1) return idx ? idx : (size_t)-1;
          if (r ==  0) return idx ? idx : (size_t)-1;
 
@@ -282,25 +269,5 @@ size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout)
       }
    } while (idx<len && countdown);
    return idx;
-}
-
-int netcode_tcp_clear_errno (void)
-{
-   SAFETY_CHECK;
-   errno = 0;
-   h_errno = 0;
-   return 0;
-}
-
-int netcode_tcp_errno (void)
-{
-   SAFETY_CHECK;
-   return errno ? errno : h_errno;
-}
-
-const char *netcode_tcp_strerror (int err)
-{
-   SAFETY_CHECK;
-   return errno ? strerror (err) : hstrerror (err);
 }
 

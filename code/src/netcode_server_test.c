@@ -30,14 +30,14 @@ static int tcp_test (void)
    memset (rx, 0, rxlen);
    rxlen--;
 
-   netcode_tcp_clear_errno ();
+   netcode_clear_errno ();
 
    printf ("SERVER-TCP: Listening on [%u] ... ", NETCODE_TEST_TCP_PORT);
 
    if ((listenfd = netcode_tcp_server (NETCODE_TEST_TCP_PORT))<0) {
       NETCODE_UTIL_LOG ("Failed to listen: [%i:%s].\n",
-                         netcode_tcp_errno (),
-                         netcode_tcp_strerror (netcode_tcp_errno ()));
+                         netcode_errno (),
+                         netcode_strerror (netcode_errno ()));
       goto errorexit;
    }
 
@@ -46,8 +46,8 @@ static int tcp_test (void)
    printf ("SERVER-TCP: Waiting for connection (max %i seconds) ... ", TIMEOUT);
    if ((clientfd = netcode_tcp_accept (listenfd, TIMEOUT, &client_ip, &client_port))<0) {
       NETCODE_UTIL_LOG ("Timed out waiting for client to connect: [%i%s].\n",
-                         netcode_tcp_errno (),
-                         netcode_tcp_strerror (netcode_tcp_errno ()));
+                         netcode_errno (),
+                         netcode_strerror (netcode_errno ()));
       goto errorexit;
    }
 

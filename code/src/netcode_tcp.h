@@ -44,10 +44,6 @@ extern "C" {
     */
    size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout);
 
-   int netcode_tcp_clear_errno (void);
-   int netcode_tcp_errno (void);
-   const char *netcode_tcp_strerror (int err);
-
 #ifdef __cplusplus
 };
 #endif

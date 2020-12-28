@@ -1,6 +1,8 @@
 #ifndef H_NETCODE_UTIL
 #define H_NETCODE_UTIL
 
+#include <stdbool.h>
+
 #define NETCODE_UTIL_LOG(...)       do {\
    printf ("[%s:%i] ", __FILE__, __LINE__);\
    printf (__VA_ARGS__);\
@@ -18,6 +20,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+   bool netcode_init (void);
+   int netcode_clear_errno (void);
+   int netcode_errno (void);
+   const char *netcode_strerror (int err);
 
 
 #ifdef __cplusplus

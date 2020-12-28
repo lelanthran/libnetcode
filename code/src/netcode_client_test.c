@@ -26,7 +26,7 @@ static int tcp_test (void)
    memset (rx, 0, rxlen);
    rxlen--;
 
-   netcode_tcp_clear_errno ();
+   netcode_clear_errno ();
 
    // printf ("CLIENT-TCP: Connecting to [%s:%u] ... ", "example.noname", NETCODE_TEST_TCP_PORT);
    printf ("CLIENT-TCP: Connecting to [%s:%u] ... ", NETCODE_TEST_SERVER, NETCODE_TEST_TCP_PORT);
@@ -34,8 +34,8 @@ static int tcp_test (void)
    // if ((fd = netcode_tcp_connect ("example.noname", NETCODE_TEST_TCP_PORT))==-1) {
    if ((fd = netcode_tcp_connect (NETCODE_TEST_SERVER, NETCODE_TEST_TCP_PORT))==-1) {
       NETCODE_UTIL_LOG ("Failed to connect: [%i:%s].\n",
-                         netcode_tcp_errno (),
-                         netcode_tcp_strerror (netcode_tcp_errno ()));
+                         netcode_errno (),
+                         netcode_strerror (netcode_errno ()));
       goto errorexit;
    }
 
