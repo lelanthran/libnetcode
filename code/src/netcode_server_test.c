@@ -180,6 +180,11 @@ errorexit:
    return ret;
 }
 
+int udps_test (void)
+{
+   return EXIT_FAILURE;
+}
+
 int main (int argc, char **argv)
 {
    int ret = EXIT_FAILURE;
@@ -187,8 +192,9 @@ int main (int argc, char **argv)
       const char *name;
       int (*fptr) (void);
    } tests [] = {
-      { "tcp_test", tcp_test },
-      { "udp_test", udp_test },
+      { "tcp_test",  tcp_test    },
+      { "udp_test",  udp_test    },
+      { "udps_test", udps_test   },
    };
 
    (void) argc;
@@ -201,7 +207,8 @@ int main (int argc, char **argv)
    for (size_t i=0; argv[1] && i<sizeof tests / sizeof tests[0]; i++) {
       if ((strcmp (tests[i].name, argv[1]))==0) {
          ret = tests[i].fptr ();
-            NETCODE_UTIL_LOG ("SERVER [%s]: %s\n", tests[i].name, ret ? "failed" : "passed");
+            NETCODE_UTIL_LOG ("=== === SERVER [%s]: %s === ===\n",
+                              tests[i].name, ret ? "failed" : "passed");
          goto errorexit;
       }
    }
@@ -226,6 +233,17 @@ int main (int argc, char **argv)
 
    printf ("***************************************\n");
    printf ("*** *** SERVER-UDP: Test passed *** ***\n");
+   printf ("***************************************\n");
+
+   if ((ret = udps_test ())!=EXIT_SUCCESS) {
+      printf ("+++++++++++++++++++++++++++++++++++++++\n");
+      printf ("+++ +++ SERVER-UDP: Test FAILED +++ +++\n");
+      printf ("+++++++++++++++++++++++++++++++++++++++\n");
+      goto errorexit;
+   }
+
+   printf ("***************************************\n");
+   printf ("*** *** SERVER-UDPS: Test passed *** ***\n");
    printf ("***************************************\n");
 
    ret = EXIT_SUCCESS;
