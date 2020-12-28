@@ -30,14 +30,14 @@ static int tcp_test (void)
    memset (rx, 0, rxlen);
    rxlen--;
 
-   netcode_clear_errno ();
+   netcode_util_clear_errno ();
 
    printf ("SERVER-TCP: Listening on [%u] ... ", NETCODE_TEST_TCP_PORT);
 
    if ((listenfd = netcode_tcp_server (NETCODE_TEST_TCP_PORT))<0) {
       NETCODE_UTIL_LOG ("Failed to listen: [%i:%s].\n",
-                         netcode_errno (),
-                         netcode_strerror (netcode_errno ()));
+                         netcode_util_errno (),
+                         netcode_util_strerror (netcode_util_errno ()));
       goto errorexit;
    }
 
@@ -46,8 +46,8 @@ static int tcp_test (void)
    printf ("SERVER-TCP: Waiting for connection (max %i seconds) ... ", TIMEOUT);
    if ((clientfd = netcode_tcp_accept (listenfd, TIMEOUT, &client_ip, &client_port))<0) {
       NETCODE_UTIL_LOG ("Timed out waiting for client to connect: [%i%s].\n",
-                         netcode_errno (),
-                         netcode_strerror (netcode_errno ()));
+                         netcode_util_errno (),
+                         netcode_util_strerror (netcode_util_errno ()));
       goto errorexit;
    }
 
@@ -124,8 +124,8 @@ int udp_test (void)
 
    if (rc == (size_t)-1) {
       NETCODE_UTIL_LOG ("SERVER-UDP: Error %i waiting for datagram: %s\n",
-                        netcode_udp_errno (),
-                        netcode_udp_strerror (netcode_udp_errno ()));
+                        netcode_util_errno (),
+                        netcode_util_strerror (netcode_util_errno ()));
       goto errorexit;
    }
 
@@ -184,6 +184,11 @@ int main (int argc, char **argv)
    };
 
    (void) argc;
+
+   if (!(netcode_util_init ())) {
+      NETCODE_UTIL_LOG ("SERVER: Failed to initialise netcode\n");
+      goto errorexit;
+   }
 
    for (size_t i=0; argv[1] && i<sizeof tests / sizeof tests[0]; i++) {
       if ((strcmp (tests[i].name, argv[1]))==0) {

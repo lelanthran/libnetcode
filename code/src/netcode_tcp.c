@@ -247,13 +247,13 @@ size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout)
       FD_SET (fd, &fds);
       int selresult = select (fd + 1, &fds, NULL, NULL, &tv);
       if (selresult>0) {
-         netcode_clear_errno ();
+         netcode_util_clear_errno ();
          ssize_t r = recv (fd, &buffer[idx], len-idx, MSG_DONTWAIT);
 
          // Return error immediately if an error is detected. Reading zero
          // bytes from a socket that caused a select() to return means
          // that the other side has disconnected.
-         if (netcode_errno ()) return idx ? idx : (size_t)-1;
+         if (netcode_util_errno ()) return idx ? idx : (size_t)-1;
          if (r == -1) return idx ? idx : (size_t)-1;
          if (r ==  0) return idx ? idx : (size_t)-1;
 

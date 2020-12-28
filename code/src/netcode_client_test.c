@@ -26,7 +26,7 @@ static int tcp_test (void)
    memset (rx, 0, rxlen);
    rxlen--;
 
-   netcode_clear_errno ();
+   netcode_util_clear_errno ();
 
    // printf ("CLIENT-TCP: Connecting to [%s:%u] ... ", "example.noname", NETCODE_TEST_TCP_PORT);
    printf ("CLIENT-TCP: Connecting to [%s:%u] ... ", NETCODE_TEST_SERVER, NETCODE_TEST_TCP_PORT);
@@ -34,8 +34,8 @@ static int tcp_test (void)
    // if ((fd = netcode_tcp_connect ("example.noname", NETCODE_TEST_TCP_PORT))==-1) {
    if ((fd = netcode_tcp_connect (NETCODE_TEST_SERVER, NETCODE_TEST_TCP_PORT))==-1) {
       NETCODE_UTIL_LOG ("Failed to connect: [%i:%s].\n",
-                         netcode_errno (),
-                         netcode_strerror (netcode_errno ()));
+                         netcode_util_errno (),
+                         netcode_util_strerror (netcode_util_errno ()));
       goto errorexit;
    }
 
@@ -97,8 +97,10 @@ int udp_test (void)
                           strlen (NETCODE_TEST_UDP_RESPONSE) + 1);
 
    if (rc != (strlen (NETCODE_TEST_UDP_RESPONSE) + 1)) {
-      NETCODE_UTIL_LOG ("CLIENT-UDP: Failed to transmit to [%s]\n",
-                        remote_ip);
+      NETCODE_UTIL_LOG ("CLIENT-UDP: Error %i to transmit to [%s]: %s\n",
+                        netcode_util_errno (),
+                        remote_ip,
+                        netcode_util_strerror (netcode_util_errno ()));
       goto errorexit;
    }
 
@@ -112,8 +114,8 @@ int udp_test (void)
 
    if (rc == (size_t)-1) {
       NETCODE_UTIL_LOG ("CLIENT-UDP: Error %i waiting for datagram: %s\n",
-                        netcode_udp_errno (),
-                        netcode_udp_strerror (netcode_udp_errno ()));
+                        netcode_util_errno (),
+                        netcode_util_strerror (netcode_util_errno ()));
       goto errorexit;
    }
 
@@ -162,6 +164,11 @@ int main (int argc, char **argv)
    };
 
    (void) argc;
+
+   if (!(netcode_util_init ())) {
+      NETCODE_UTIL_LOG ("SERVER: Failed to initialise netcode\n");
+      goto errorexit;
+   }
 
    for (size_t i=0; argv[1] && i<sizeof tests / sizeof tests[0]; i++) {
       if ((strcmp (tests[i].name, argv[1]))==0) {

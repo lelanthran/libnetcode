@@ -21,10 +21,10 @@
 extern "C" {
 #endif
 
-   bool netcode_init (void);
-   int netcode_clear_errno (void);
-   int netcode_errno (void);
-   const char *netcode_strerror (int err);
+   bool netcode_util_init (void);
+   int netcode_util_clear_errno (void);
+   int netcode_util_errno (void);
+   const char *netcode_util_strerror (int err);
 
 
 #ifdef __cplusplus
