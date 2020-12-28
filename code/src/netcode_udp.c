@@ -114,6 +114,9 @@ size_t netcode_udp_wait (int fd, char **remote_host,
                          uint8_t **buf, size_t *buflen,
                          size_t timeout)
 {
+   bool error = true;
+   size_t retval = (size_t)-1;
+
    struct timeval tv = { timeout , 0 };
    int error_code = 0;
    socklen_t error_code_len = sizeof error_code;
@@ -130,7 +133,8 @@ size_t netcode_udp_wait (int fd, char **remote_host,
 
    getsockopt (fd,
                SOL_SOCKET, SO_ERROR, &error_code, &error_code_len);
-   if (error_code!=0) return (size_t)-1;
+   if (error_code!=0)
+      goto errorexit;
 
    fd_set fds;
    FD_ZERO (&fds);
@@ -140,25 +144,16 @@ size_t netcode_udp_wait (int fd, char **remote_host,
       netcode_util_clear_errno ();
       ssize_t r = recvfrom (fd, NULL, 0, MSG_DONTWAIT | MSG_PEEK | MSG_TRUNC,
                             (struct sockaddr *)&addr_remote, &addr_remote_len);
-      int rc = netcode_util_errno ();
 
       // An error occurred, return errorcode
-      if (rc < 0 ) {
-         free (*remote_host);
-         *remote_host = NULL;
-         free (*buf);
-         *buf = NULL;
-         *buflen = 0;
-         return -1;
+      if (r < 0 ) {
+         goto errorexit;
       }
 
       // Copy the addr info
       *remote_host = malloc (17);
       if (!*remote_host) {
-         free (*buf);
-         *buf = NULL;
-         *buflen = 0;
-         return -1;
+         goto errorexit;
       }
 
       uint8_t bytes[4];
@@ -174,56 +169,78 @@ size_t netcode_udp_wait (int fd, char **remote_host,
 
       // Zero length datagram received. We're returning nothing except the
       // remote peer's address info.
-      if (rc == 0) {
-         return 0;
+      if (r == 0) {
+         error = false;
+         goto errorexit;
       }
 
       // Valid length in r. Reallocate the dst buffer and try again.
       *buflen = (size_t)r;
       if (!(*buf = malloc (*buflen))) {
-         return -1;  // Out of memory
+         goto errorexit;
       }
       r = recvfrom (fd, *buf, *buflen, MSG_DONTWAIT, NULL, NULL);
 
-      rc = netcode_util_errno ();
-
-      if (r != *buflen || rc != 0) {
-         free (*remote_host);
-         *remote_host = NULL;
-         free (*buf);
-         *buf = NULL;
-         *buflen = 0;
-         return -1;  // Underlying error in the socket implementation
+      if ((size_t)r != *buflen) {
+         goto errorexit; // Underlying error in the socket implementation
       }
    }
    if (selresult==0) {
-      free (*remote_host);
-      *remote_host = NULL;
-      free (*buf);
-      *buf = NULL;
-      *buflen = 0;
-      return 0;
+      error = false;
+      goto errorexit;
    }
    if (selresult < 0) {
-      free (*remote_host);
-      *remote_host = NULL;
+      goto errorexit;
+   }
+
+   retval = *buflen;
+   error = false;
+
+errorexit:
+
+   if (error) {
       free (*buf);
       *buf = NULL;
       *buflen = 0;
-      return (size_t)-1;
+      free (*remote_host);
+      *remote_host = NULL;
+      retval = (size_t)-1;
    }
-   return *buflen;;
+
+   return retval;
 }
 
-size_t netcode_udp_send (int fd, char *remote_host,
+size_t netcode_udp_send (int fd, char *remote_host, uint16_t port,
                          uint8_t *buf, size_t buflen)
 {
-   (void)fd;
-   (void)remote_host;
-   (void)buf;
-   (void)buflen;
+   ssize_t txed = 0;
+   int flags = 0;
+   struct sockaddr_in dest_addr;
+   struct hostent *host_addr = NULL;
 
-   return (size_t)-1;
+   if (remote_host && port) {
+      memset (&dest_addr, 0, sizeof dest_addr);
+      dest_addr.sin_family = AF_INET;
+      dest_addr.sin_port = htons (port);
+
+      if ((host_addr = gethostbyname (remote_host))!=NULL) {
+         memcpy (&dest_addr.sin_addr.s_addr, host_addr->h_addr_list[0],
+                 sizeof dest_addr.sin_addr.s_addr);
+      } else {
+         return (size_t)-1;
+      }
+
+      if ((txed = sendto (fd, buf, buflen, flags,
+                          (const struct sockaddr *)&dest_addr, sizeof (dest_addr)))==-1) {
+         return (size_t)-1;
+      }
+   } else {
+      if ((txed = sendto (fd, buf, buflen, flags, NULL, 0))) {
+         return (size_t)-1;
+      }
+   }
+
+   return (size_t)txed;
 }
 
 int netcode_udp_errno (void)

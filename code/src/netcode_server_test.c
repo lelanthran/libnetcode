@@ -114,7 +114,13 @@ int udp_test (void)
 
    printf ("SERVER-UDP: Setting up datagram socket ... ");
 
-   udp_socket = netcode_udp_socket (NETCODE_TEST_UDP_PORT, NULL);
+   if ((udp_socket = netcode_udp_socket (NETCODE_TEST_UDP_SERVER_PORT, NULL)) < 0) {
+      NETCODE_UTIL_LOG ("SERVER-UDP: Failed to initialise socket, error %i [%s.\n",
+                        netcode_util_errno (),
+                        netcode_util_strerror (netcode_util_errno ()));
+      goto errorexit;
+   }
+
 
    printf ("done.\nSERVER-UDP: Waiting for incoming datagram ... ");
 
@@ -129,7 +135,7 @@ int udp_test (void)
       goto errorexit;
    }
 
-   if (rc == 0) {
+   if (rc == 0 && !*remote_ip) {
       NETCODE_UTIL_LOG ("SERVER-UDP: Timed out waiting for datagram\n");
       goto errorexit;
    }
@@ -144,19 +150,21 @@ int udp_test (void)
       }
       memcpy (tmp, rxdata, rxlen);
 
-      NETCODE_UTIL_LOG ("SERVER-UDP: incorrect data rxed [%s]\n",
+      NETCODE_UTIL_LOG ("SERVER-UDP: incorrect data rxed expected[%s], got[%s]\n",
+                        NETCODE_TEST_UDP_REQUEST,
                         tmp);
       goto errorexit;
    }
 
-   printf ("SERVER-UDP: Received [%s]\n", rxdata);
+   printf ("SERVER-UDP: Received [%s] from [%s]\n", rxdata, remote_ip);
 
-   rc = netcode_udp_send (udp_socket, remote_ip,
+   rc = netcode_udp_send (udp_socket, remote_ip, NETCODE_TEST_UDP_CLIENT_PORT,
                           (uint8_t *)NETCODE_TEST_UDP_RESPONSE,
                           strlen (NETCODE_TEST_UDP_RESPONSE) + 1);
    if (rc != (strlen (NETCODE_TEST_UDP_RESPONSE) + 1)) {
-      NETCODE_UTIL_LOG ("SERVER-UDP: Failed to transmit to [%s]\n",
-                        remote_ip);
+      NETCODE_UTIL_LOG ("SERVER-UDP: Failed to transmit to [%s], udp_send() returned %zu\n",
+                        remote_ip,
+                        rc);
       goto errorexit;
    }
 
@@ -199,14 +207,26 @@ int main (int argc, char **argv)
    }
 
    if ((ret = tcp_test ())!=EXIT_SUCCESS) {
-      NETCODE_UTIL_LOG ("SERVER-TCP: Test failed\n");
+      printf ("+++++++++++++++++++++++++++++++++++++++\n");
+      printf ("+++ +++ SERVER-TCP: Test FAILED +++ +++\n");
+      printf ("+++++++++++++++++++++++++++++++++++++++\n");
       goto errorexit;
    }
 
+   printf ("***************************************\n");
+   printf ("*** *** SERVER-TCP: Test passed *** ***\n");
+   printf ("***************************************\n");
+
    if ((ret = udp_test ())!=EXIT_SUCCESS) {
-      NETCODE_UTIL_LOG ("SERVER-UDP: Test failed\n");
+      printf ("+++++++++++++++++++++++++++++++++++++++\n");
+      printf ("+++ +++ SERVER-UDP: Test FAILED +++ +++\n");
+      printf ("+++++++++++++++++++++++++++++++++++++++\n");
       goto errorexit;
    }
+
+   printf ("***************************************\n");
+   printf ("*** *** SERVER-UDP: Test passed *** ***\n");
+   printf ("***************************************\n");
 
    ret = EXIT_SUCCESS;
 

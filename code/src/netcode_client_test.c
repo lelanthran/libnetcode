@@ -88,15 +88,20 @@ int udp_test (void)
 
    printf ("CLIENT-UDP: Setting up datagram socket ... ");
 
-   udp_socket = netcode_udp_socket (NETCODE_TEST_UDP_PORT, NETCODE_TEST_SERVER);
+   if ((udp_socket = netcode_udp_socket (NETCODE_TEST_UDP_CLIENT_PORT, NULL)) < 0) {
+      NETCODE_UTIL_LOG ("CLIENT-UDP: Failed to initialise socket, error %i [%s.\n",
+                        netcode_util_errno (),
+                        netcode_util_strerror (netcode_util_errno ()));
+      goto errorexit;
+   }
 
-   printf ("CLIENT-UDP: sending datagra to [%s] ... ", NETCODE_TEST_SERVER);
+   printf ("done\nCLIENT-UDP: sending datagram to [%s] ... ", NETCODE_TEST_SERVER);
 
-   rc = netcode_udp_send (udp_socket, remote_ip,
-                          (uint8_t *)NETCODE_TEST_UDP_RESPONSE,
-                          strlen (NETCODE_TEST_UDP_RESPONSE) + 1);
+   rc = netcode_udp_send (udp_socket, NETCODE_TEST_SERVER, NETCODE_TEST_UDP_SERVER_PORT,
+                          (uint8_t *)NETCODE_TEST_UDP_REQUEST,
+                          strlen (NETCODE_TEST_UDP_REQUEST) + 1);
 
-   if (rc != (strlen (NETCODE_TEST_UDP_RESPONSE) + 1)) {
+   if (rc != (strlen (NETCODE_TEST_UDP_REQUEST) + 1)) {
       NETCODE_UTIL_LOG ("CLIENT-UDP: Error %i to transmit to [%s]: %s\n",
                         netcode_util_errno (),
                         remote_ip,
@@ -179,14 +184,26 @@ int main (int argc, char **argv)
    }
 
    if ((ret = tcp_test ())!=EXIT_SUCCESS) {
-      NETCODE_UTIL_LOG ("CLIENT-TCP: Test failed\n");
+      printf ("+++++++++++++++++++++++++++++++++++++++\n");
+      printf ("+++ +++ CLIENT-TCP: Test FAILED +++ +++\n");
+      printf ("+++++++++++++++++++++++++++++++++++++++\n");
       goto errorexit;
    }
 
+   printf ("***************************************\n");
+   printf ("*** *** CLIENT-TCP: Test passed *** ***\n");
+   printf ("***************************************\n");
+
    if ((ret = udp_test ())!=EXIT_SUCCESS) {
-      NETCODE_UTIL_LOG ("CLIENT-UDP: Test failed\n");
+      printf ("+++++++++++++++++++++++++++++++++++++++\n");
+      printf ("+++ +++ CLIENT-UDP: Test FAILED +++ +++\n");
+      printf ("+++++++++++++++++++++++++++++++++++++++\n");
       goto errorexit;
    }
+
+   printf ("***************************************\n");
+   printf ("*** *** CLIENT-UDP: Test passed *** ***\n");
+   printf ("***************************************\n");
 
    ret = EXIT_SUCCESS;
 

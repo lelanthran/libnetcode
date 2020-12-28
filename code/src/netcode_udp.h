@@ -61,7 +61,7 @@ extern "C" {
    // If remote_host is NULL then the datagram will be sent to the host
    // specified in the netcode_udp_socket() call that was used to create
    // the 'fd'.
-   size_t netcode_udp_send (int fd, char *remote_host,
+   size_t netcode_udp_send (int fd, char *remote_host, uint16_t port,
                             uint8_t *buf, size_t buflen);
 
    // Returns the last error number that occurred.
