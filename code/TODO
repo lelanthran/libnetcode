@@ -1,0 +1,3 @@
+========================================
+Urgent: Find all the non-thread-safe functions like gethostbyname
+and replace with getaddrinfo and getnameinfo.
