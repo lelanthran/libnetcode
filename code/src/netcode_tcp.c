@@ -93,7 +93,7 @@ int netcode_tcp_server (size_t port)
    addr.sin_port = htons (port);
    int fd = -1;
    if (port==0) {
-      close (fd);
+      return -1;
    }
    fd = socket (AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
    if (fd<0) {
@@ -149,7 +149,7 @@ int netcode_tcp_accept (int fd, size_t timeout, char **addr, uint16_t *port)
    */
 
    if (addr) {
-      *addr = malloc (16);
+      *addr = malloc (17);
       if (!*addr) {
          return retval;
       }
