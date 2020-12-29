@@ -122,6 +122,9 @@ size_t netcode_udp_wait (int fd, char **remote_host,
    socklen_t error_code_len = sizeof error_code;
    struct sockaddr_in addr_remote;
    socklen_t addr_remote_len = sizeof addr_remote;
+#ifdef PLATFORM_Windows
+   char *tmp = NULL;
+#endif
 
    memset (&addr_remote, 0xff, sizeof (addr_remote));
 
@@ -146,7 +149,9 @@ size_t netcode_udp_wait (int fd, char **remote_host,
    if (selresult > 0) {
       netcode_util_clear_errno ();
 #ifdef PLATFORM_Windows
-      ssize_t r = recvfrom (fd, NULL, 0, MSG_DONTWAIT | MSG_PEEK,
+      size_t max_size = 70 * 1024;
+      tmp = malloc (max_size);
+      ssize_t r = recvfrom (fd, tmp, max_size, MSG_DONTWAIT | MSG_PEEK,
                             (struct sockaddr *)&addr_remote, (int *)&addr_remote_len);
 #else
       ssize_t r = recvfrom (fd, NULL, 0, MSG_DONTWAIT | MSG_PEEK | MSG_TRUNC,
@@ -155,6 +160,7 @@ size_t netcode_udp_wait (int fd, char **remote_host,
 
       // An error occurred, return errorcode
       if (r < 0 ) {
+         NETCODE_UTIL_LOG ("First possible error: %i, %zi\n", errno, r);
          goto errorexit;
       }
 
@@ -188,7 +194,7 @@ size_t netcode_udp_wait (int fd, char **remote_host,
          goto errorexit;
       }
 #ifdef PLATFORM_Windows
-      r = recvfrom (fd, (char *)*buf, (int )*buflen, MSG_DONTWAIT, NULL, NULL);
+      memcpy (*buf, tmp, *buflen);
 #else
       r = recvfrom (fd, *buf, *buflen, MSG_DONTWAIT, NULL, NULL);
 #endif
@@ -209,6 +215,8 @@ size_t netcode_udp_wait (int fd, char **remote_host,
    error = false;
 
 errorexit:
+
+   free (tmp);
 
    if (error) {
       free (*buf);

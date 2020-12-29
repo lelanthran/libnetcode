@@ -115,11 +115,19 @@ int netcode_util_clear_errno (void)
 
 int netcode_util_errno (void)
 {
+#ifdef PLATFORM_Windows
+   return WSAGetLastError ();
+#else
    return errno ? errno : h_errno;
+#endif
 }
 
 const char *netcode_util_strerror (int err)
 {
+#ifdef PLATFORM_Windows
+   return strerror (err);
+#else
    return errno ? strerror (err) : hstrerror (err);
+#endif
 }
 
