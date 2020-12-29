@@ -1,3 +1,8 @@
+# v1.0.2 - Tue 29 Dec 2020 09:29:19 SAST
+
+1. Cleaned up some of the non-code files.
+2. Added missing implementation for util.
+
 # v1.0.1 - Tue 29 Dec 2020 09:19:48 SAST
 
 1. TCP routines (server and client)
