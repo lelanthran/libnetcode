@@ -10,7 +10,8 @@ extern "C" {
 #endif
 
    /* Wait for a tcp connection on the specified port, waiting indefinitely.
-    * The fd of the connected socket is returned.
+    * The fd of the connected socket is returned. On error (size_t)-1 is
+    * returned. On success the file descriptor of the socket is returned.
     */
    int netcode_tcp_server (size_t port);
 
@@ -24,23 +25,35 @@ extern "C" {
    int netcode_tcp_accept (int fd, size_t timeout, char **addr, uint16_t *port);
 
    /* Make a connection to the specified server on the specified port.
-    * The fd of the connected descriptor is returned.
+    * On success the fd of the connected descriptor is returned. On error -1
+    * is returned.
     */
    int netcode_tcp_connect (const char *server, size_t port);
 
    /* Close the given file descriptor. fd must have been previously opened
     * using a netcode_tcp_*() function.
+    *
+    * On success zero is returned. On error -1 is returned.
     */
    int netcode_tcp_close (int fd);
 
-   /* Write the given buffer to the given fd, return number of bytes
-    * successfully returned. On error (size_t)-1 is returned.
+   /* Write the given buffer to the given fd. On success the number
+    * of bytes written is returned, which may be less than the specified
+    * number of bytes.
+    *
+    * On error (size_t)-1 is returned.
     */
    size_t netcode_tcp_write (int fd, const void *buf, size_t len);
 
    /* Read not more than the specified number of bytes from the given fd
-    * into the specified buffer. On error (size_t) -1 is returned. No
-    * more than timeout seconds is spent waiting for a message.
+    * into the specified buffer. This function returns when the specified
+    * buffer is full or when the timeout expires, whichever happens first.
+    *
+    * On success the number of bytes that were actually read is returned,
+    * which will be less than or equal to the length specified. On error
+    * (size_t) -1 is returned.
+    *
+    * No more than timeout seconds is spent filling the buffer.
     */
    size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout);
 

@@ -78,7 +78,7 @@ int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags);
 
 #include "netcode_udp.h"
 
-int netcode_udp_socket (uint16_t port, const char *host)
+int netcode_udp_socket (uint16_t listen_port, const char *default_host)
 {
    int sockfd;
    struct sockaddr_in addr;
@@ -86,10 +86,10 @@ int netcode_udp_socket (uint16_t port, const char *host)
 
    memset (&addr, 0, sizeof(addr));
    addr.sin_family = AF_INET;
-   addr.sin_port = htons (port);
+   addr.sin_port = htons (listen_port);
 
-   if (host) {
-      if ((host_addr = gethostbyname (host))!=NULL) {
+   if (default_host) {
+      if ((host_addr = gethostbyname (default_host))!=NULL) {
          memcpy (&addr.sin_addr.s_addr, host_addr->h_addr_list[0],
                  sizeof (addr.sin_addr.s_addr));
       } else {
@@ -241,16 +241,5 @@ size_t netcode_udp_send (int fd, char *remote_host, uint16_t port,
    }
 
    return (size_t)txed;
-}
-
-int netcode_udp_errno (void)
-{
-   return -1;
-}
-
-const char *netcode_udp_strerror (int error)
-{
-   (void)error;
-   return "UNIMPLEMENTED";
 }
 

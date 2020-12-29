@@ -16,7 +16,7 @@ extern "C" {
    // On sending, a different host may be specified.
    // On error will return -1 and the error and error message can be
    // retrieved using the _errno() and _strerror() functions.
-   int netcode_udp_socket (uint16_t port, const char *host);
+   int netcode_udp_socket (uint16_t listen_port, const char *default_host);
 
    // Will wait not less than 'timeout' seconds for a datagram
    // on the port that the socket fd is connected on. When a datagram
@@ -63,13 +63,6 @@ extern "C" {
    // the 'fd'.
    size_t netcode_udp_send (int fd, char *remote_host, uint16_t port,
                             uint8_t *buf, size_t buflen);
-
-   // Returns the last error number that occurred.
-   int netcode_udp_errno (void);
-
-   // Returns a human-readable string describing the error specified in
-   // the parameter 'error'.
-   const char *netcode_udp_strerror (int error);
 
 #ifdef __cplusplus
 };
