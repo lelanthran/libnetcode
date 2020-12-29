@@ -27,6 +27,7 @@
 #define accept4(x,y,z,A)   accept (x,y,(int *)z)
 #define SEND(x,y,z)        send (x,y,z, 0)
 #define read(x,y,z)        recv (x,(char *)y,z, 0)
+#define SHUT_RDWR          SD_BOTH
 
 typedef size_t socklen_t;
 
@@ -34,7 +35,7 @@ static bool initialised = false;
 
 #define SAFETY_CHECK       do {\
    if (!initialised) {\
-      netcode_init (); \
+      netcode_util_init (); \
       initialised = true;\
    }\
 } while (0)
@@ -236,8 +237,11 @@ size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout)
    int error_code = 0;
    socklen_t error_code_len = sizeof error_code;
 
-   getsockopt (fd,
-               SOL_SOCKET, SO_ERROR, &error_code, &error_code_len);
+#ifdef PLATFORM_Windows
+   getsockopt (fd, SOL_SOCKET, SO_ERROR, (char *)&error_code, (int *)&error_code_len);
+#else
+   getsockopt (fd, SOL_SOCKET, SO_ERROR, &error_code, &error_code_len);
+#endif
    if (error_code!=0) return (size_t)-1;
    SAFETY_CHECK;
    // NETCODE_UTIL_LOG ("Attempting to read %zu bytes\n", len);
@@ -248,7 +252,11 @@ size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout)
       int selresult = select (fd + 1, &fds, NULL, NULL, &tv);
       if (selresult>0) {
          netcode_util_clear_errno ();
+#ifdef PLATFORM_Windows
+         ssize_t r = recv (fd, (char *)&buffer[idx], len-idx, MSG_DONTWAIT);
+#else
          ssize_t r = recv (fd, &buffer[idx], len-idx, MSG_DONTWAIT);
+#endif
 
          // Return error immediately if an error is detected. Reading zero
          // bytes from a socket that caused a select() to return means

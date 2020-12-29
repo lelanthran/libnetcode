@@ -26,11 +26,13 @@
 #define SEND(x,y,z)        send (x,y,z, 0)
 #define read(x,y,z)        recv (x,(char *)y,z, 0)
 
+const char *hstrerror (int error);
+
 static bool initialised = false;
 
 #define SAFETY_CHECK       do {\
    if (!initialised) {\
-      netcode_util_init (); \
+      wsa_netcode_init (); \
       initialised = true;\
    }\
 } while (0)
@@ -105,7 +107,9 @@ bool netcode_util_init (void)
 int netcode_util_clear_errno (void)
 {
    errno = 0;
+#ifndef PLATFORM_Windows
    h_errno = 0;
+#endif
    return 0;
 }
 
