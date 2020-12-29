@@ -2,6 +2,7 @@
 
 1. Cleaned up some of the non-code files, updated comments, etc.
 2. Added missing implementation for util.
+3. Ported to Windows.
 
 # v1.0.1 - Tue 29 Dec 2020 09:19:48 SAST
 
