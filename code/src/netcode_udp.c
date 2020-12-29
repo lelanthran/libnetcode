@@ -34,7 +34,7 @@ static bool initialised = false;
 
 #define SAFETY_CHECK       do {\
    if (!initialised) {\
-      netcode_init (); \
+      netcode_util_init (); \
       initialised = true;\
    }\
 } while (0)
@@ -131,8 +131,11 @@ size_t netcode_udp_wait (int fd, char **remote_host,
    *buf = NULL;
    *buflen = 0;
 
-   getsockopt (fd,
-               SOL_SOCKET, SO_ERROR, &error_code, &error_code_len);
+#ifdef PLATFORM_Windows
+   getsockopt (fd, SOL_SOCKET, SO_ERROR,(char *)&error_code, (int *)&error_code_len);
+#else
+   getsockopt (fd, SOL_SOCKET, SO_ERROR, &error_code, &error_code_len);
+#endif
    if (error_code!=0)
       goto errorexit;
 
@@ -142,8 +145,13 @@ size_t netcode_udp_wait (int fd, char **remote_host,
    int selresult = select (fd + 1, &fds, NULL, NULL, &tv);
    if (selresult > 0) {
       netcode_util_clear_errno ();
+#ifdef PLATFORM_Windows
+      ssize_t r = recvfrom (fd, NULL, 0, MSG_DONTWAIT | MSG_PEEK,
+                            (struct sockaddr *)&addr_remote, (int *)&addr_remote_len);
+#else
       ssize_t r = recvfrom (fd, NULL, 0, MSG_DONTWAIT | MSG_PEEK | MSG_TRUNC,
                             (struct sockaddr *)&addr_remote, &addr_remote_len);
+#endif
 
       // An error occurred, return errorcode
       if (r < 0 ) {
@@ -179,7 +187,11 @@ size_t netcode_udp_wait (int fd, char **remote_host,
       if (!(*buf = malloc (*buflen))) {
          goto errorexit;
       }
+#ifdef PLATFORM_Windows
+      r = recvfrom (fd, (char *)*buf, (int )*buflen, MSG_DONTWAIT, NULL, NULL);
+#else
       r = recvfrom (fd, *buf, *buflen, MSG_DONTWAIT, NULL, NULL);
+#endif
 
       if ((size_t)r != *buflen) {
          goto errorexit; // Underlying error in the socket implementation
@@ -230,12 +242,20 @@ size_t netcode_udp_send (int fd, char *remote_host, uint16_t port,
          return (size_t)-1;
       }
 
+#ifdef PLATFORM_Windows
+      if ((txed = sendto (fd, (char *)buf,  (int)buflen, flags,
+                          (const struct sockaddr *)&dest_addr, sizeof (dest_addr)))==-1) {
+#else
       if ((txed = sendto (fd, buf, buflen, flags,
                           (const struct sockaddr *)&dest_addr, sizeof (dest_addr)))==-1) {
+#endif
          return (size_t)-1;
       }
    } else {
-      if ((txed = sendto (fd, buf, buflen, flags, NULL, 0))) {
+#ifdef PLATFORM_Windows
+      if ((txed = sendto (fd, (char *)buf,  (int)buflen, flags, NULL, 0))) {
+#else
+#endif
          return (size_t)-1;
       }
    }
