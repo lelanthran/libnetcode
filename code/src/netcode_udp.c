@@ -216,7 +216,9 @@ size_t netcode_udp_wait (int fd, char **remote_host,
 
 errorexit:
 
+#ifdef PLATFORM_Windows
    free (tmp);
+#endif
 
    if (error) {
       free (*buf);
@@ -263,6 +265,7 @@ size_t netcode_udp_send (int fd, char *remote_host, uint16_t port,
 #ifdef PLATFORM_Windows
       if ((txed = sendto (fd, (char *)buf,  (int)buflen, flags, NULL, 0))) {
 #else
+      if ((txed = sendto (fd, buf,  buflen, flags, NULL, 0))) {
 #endif
          return (size_t)-1;
       }
