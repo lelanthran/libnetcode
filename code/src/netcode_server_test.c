@@ -94,10 +94,10 @@ errorexit:
    free (client_ip);
 
    if (listenfd >= 0) {
-      netcode_tcp_close (listenfd);
+      netcode_util_close (listenfd);
    }
    if (clientfd >= 0) {
-      netcode_tcp_close (clientfd);
+      netcode_util_close (clientfd);
    }
    return ret;
 }

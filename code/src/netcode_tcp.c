@@ -209,16 +209,6 @@ int netcode_tcp_connect (const char *server, size_t port)
    return fd;
 }
 
-int netcode_tcp_close (int fd)
-{
-   /* ****************************************
-    * 1. Call close() on the socket descriptor
-    */
-   SAFETY_CHECK;
-   shutdown (fd, SHUT_RDWR);
-   return close (fd);
-}
-
 size_t netcode_tcp_write (int fd, const void *buf, size_t len)
 {
    SAFETY_CHECK;

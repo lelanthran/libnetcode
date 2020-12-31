@@ -184,6 +184,7 @@ size_t netcode_udp_wait (int fd, char **remote_host,
       // Zero length datagram received. We're returning nothing except the
       // remote peer's address info.
       if (r == 0) {
+         retval = *buflen;
          error = false;
          goto errorexit;
       }
@@ -204,6 +205,7 @@ size_t netcode_udp_wait (int fd, char **remote_host,
       }
    }
    if (selresult==0) {
+      retval = *buflen;
       error = false;
       goto errorexit;
    }

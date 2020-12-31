@@ -71,7 +71,7 @@ static int tcp_test (void)
 errorexit:
    free (rx);
    if (fd >= 0) {
-      netcode_tcp_close (fd);
+      netcode_util_close (fd);
    }
    return ret;
 }

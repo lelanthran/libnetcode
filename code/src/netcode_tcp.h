@@ -30,13 +30,6 @@ extern "C" {
     */
    int netcode_tcp_connect (const char *server, size_t port);
 
-   /* Close the given file descriptor. fd must have been previously opened
-    * using a netcode_tcp_*() function.
-    *
-    * On success zero is returned. On error -1 is returned.
-    */
-   int netcode_tcp_close (int fd);
-
    /* Write the given buffer to the given fd. On success the number
     * of bytes written is returned, which may be less than the specified
     * number of bytes.

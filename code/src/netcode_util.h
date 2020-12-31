@@ -27,6 +27,8 @@ extern "C" {
    int netcode_util_errno (void);
    const char *netcode_util_strerror (int err);
 
+   int netcode_util_close (int fd);
+
 
 #ifdef __cplusplus
 };

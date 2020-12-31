@@ -13,6 +13,10 @@ extern "C" {
    // the port specified and, on sending, will send to the host
    // specified on the port specified.
    //
+   // The port number is mandatory. The default_host is optional and
+   // can be NULL. If no host is specified _udp_send() will fail unless
+   // a host is provided.
+   //
    // On sending, a different host may be specified.
    // On error will return -1 and the error and error message can be
    // retrieved using the _errno() and _strerror() functions.

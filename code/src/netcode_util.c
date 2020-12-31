@@ -131,3 +131,13 @@ const char *netcode_util_strerror (int err)
 #endif
 }
 
+int netcode_util_close (int fd)
+{
+   /* ****************************************
+    * 1. Call close() on the socket descriptor
+    */
+   SAFETY_CHECK;
+   shutdown (fd, SHUT_RDWR);
+   return close (fd);
+}
+
