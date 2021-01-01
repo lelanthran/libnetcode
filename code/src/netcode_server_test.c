@@ -143,33 +143,39 @@ int udp_test (void)
    printf ("SERVER-UDP: Received %zu/%zu bytes from [%s]\n",
            rc, rxlen, remote_ip);
 
-   if ((memcmp (NETCODE_TEST_UDP_REQUEST, rxdata, rxlen))!=0) {
+
+   uint8_t *part2 = &rxdata[strlen (NETCODE_TEST_UDP_REQUEST1) + 1];
+   if (((memcmp (NETCODE_TEST_UDP_REQUEST1, rxdata, strlen (NETCODE_TEST_UDP_REQUEST1)))!=0) ||
+       ((memcmp (NETCODE_TEST_UDP_REQUEST2, part2, strlen (NETCODE_TEST_UDP_REQUEST2)))!=0)) {
       if (!(tmp = calloc (1, rxlen + 1))) {
          NETCODE_UTIL_LOG ("OOM error\n");
          goto errorexit;
       }
       memcpy (tmp, rxdata, rxlen);
 
-      NETCODE_UTIL_LOG ("SERVER-UDP: incorrect data rxed expected[%s], got[%s]\n",
-                        NETCODE_TEST_UDP_REQUEST,
+      NETCODE_UTIL_LOG ("SERVER-UDP: incorrect data rxed expected[%s%s], got[%s]\n",
+                        NETCODE_TEST_UDP_REQUEST1, NETCODE_TEST_UDP_REQUEST2,
                         tmp);
       goto errorexit;
    }
 
-   printf ("SERVER-UDP: Received [%s] from [%s]\n", rxdata, remote_ip);
+   printf ("SERVER-UDP: Received [%s%s] from [%s]\n", rxdata, part2, remote_ip);
 
    rc = netcode_udp_send (udp_socket, remote_ip, NETCODE_TEST_UDP_CLIENT_PORT,
-                          (uint8_t *)NETCODE_TEST_UDP_RESPONSE,
-                          strlen (NETCODE_TEST_UDP_RESPONSE) + 1, 
+                          (uint8_t *)NETCODE_TEST_UDP_RESPONSE1,
+                          strlen (NETCODE_TEST_UDP_RESPONSE1) + 1,
+                          (uint8_t *)NETCODE_TEST_UDP_RESPONSE2,
+                          strlen (NETCODE_TEST_UDP_RESPONSE2) + 1,
                           NULL);
-   if (rc != (strlen (NETCODE_TEST_UDP_RESPONSE) + 1)) {
+   if (rc != (strlen (NETCODE_TEST_UDP_RESPONSE1) + 1 + strlen (NETCODE_TEST_UDP_RESPONSE2) + 1)) {
       NETCODE_UTIL_LOG ("SERVER-UDP: Failed to transmit to [%s], udp_send() returned %zu\n",
                         remote_ip,
                         rc);
       goto errorexit;
    }
 
-   printf ("SERVER-UDP: Responded with [%s]\n", NETCODE_TEST_UDP_RESPONSE);
+   printf ("SERVER-UDP: Responded with [%s%s]\n", NETCODE_TEST_UDP_RESPONSE1,
+                                                  NETCODE_TEST_UDP_RESPONSE2);
 
    ret = EXIT_SUCCESS;
 
@@ -202,8 +208,8 @@ int main (int argc, char **argv)
    for (size_t i=0; argv[1] && i<sizeof tests / sizeof tests[0]; i++) {
       if ((strcmp (tests[i].name, argv[1]))==0) {
          ret = tests[i].fptr ();
-         NETCODE_UTIL_LOG ("SERVER [%s]: %s\n", tests[i].name, ret ? "failed" : "passed",
-                                                netcode_util_strerror (netcode_util_errno ()));
+         NETCODE_UTIL_LOG ("SERVER-%s[%s]: %s\n", tests[i].name, ret ? "failed" : "passed",
+                                                   netcode_util_strerror (netcode_util_errno ()));
          goto errorexit;
       }
    }

@@ -98,11 +98,13 @@ int udp_test (void)
    printf ("done\nCLIENT-UDP: sending datagram to [%s] ... ", NETCODE_TEST_SERVER);
 
    rc = netcode_udp_send (udp_socket, NETCODE_TEST_SERVER, NETCODE_TEST_UDP_SERVER_PORT,
-                          (uint8_t *)NETCODE_TEST_UDP_REQUEST,
-                          strlen (NETCODE_TEST_UDP_REQUEST) + 1,
+                          (uint8_t *)NETCODE_TEST_UDP_REQUEST1,
+                          strlen (NETCODE_TEST_UDP_REQUEST1) + 1,
+                          (uint8_t *)NETCODE_TEST_UDP_REQUEST2,
+                          strlen (NETCODE_TEST_UDP_REQUEST2) + 1,
                           NULL);
 
-   if (rc != (strlen (NETCODE_TEST_UDP_REQUEST) + 1)) {
+   if (rc != (strlen (NETCODE_TEST_UDP_REQUEST1) + 1 + strlen (NETCODE_TEST_UDP_REQUEST2) + 1)) {
       NETCODE_UTIL_LOG ("CLIENT-UDP: Error %i to transmit to [%s]: %s\n",
                         netcode_util_errno (),
                         remote_ip,
@@ -133,7 +135,9 @@ int udp_test (void)
    printf ("CLIENT-UDP: Received %zu/%zu bytes from [%s]\n",
            rc, rxlen, remote_ip);
 
-   if ((memcmp (NETCODE_TEST_UDP_RESPONSE, rxdata, rxlen))!=0) {
+   uint8_t *part2 = &rxdata[strlen (NETCODE_TEST_UDP_RESPONSE1) + 1];
+   if (((memcmp (NETCODE_TEST_UDP_RESPONSE1, rxdata, strlen (NETCODE_TEST_UDP_RESPONSE1)))!=0) ||
+       ((memcmp (NETCODE_TEST_UDP_RESPONSE2, part2, strlen (NETCODE_TEST_UDP_RESPONSE2)))!=0)) {
       if (!(tmp = calloc (1, rxlen + 1))) {
          NETCODE_UTIL_LOG ("OOM error\n");
          goto errorexit;
@@ -145,7 +149,7 @@ int udp_test (void)
       goto errorexit;
    }
 
-   printf ("CLIENT-UDP: Received [%s]\n", rxdata);
+   printf ("CLIENT-UDP: Received [%s%s]\n", rxdata, part2);
 
    ret = EXIT_SUCCESS;
 
@@ -179,8 +183,8 @@ int main (int argc, char **argv)
    for (size_t i=0; argv[1] && i<sizeof tests / sizeof tests[0]; i++) {
       if ((strcmp (tests[i].name, argv[1]))==0) {
          ret = tests[i].fptr ();
-         NETCODE_UTIL_LOG ("CLIENT [%s]: %s\n", tests[i].name, ret ? "failed" : "passed",
-                                                netcode_util_strerror (netcode_util_errno ()));
+         NETCODE_UTIL_LOG ("CLIENT-%s[%s]: %s\n", tests[i].name, ret ? "failed" : "passed",
+                                                  netcode_util_strerror (netcode_util_errno ()));
          goto errorexit;
       }
    }

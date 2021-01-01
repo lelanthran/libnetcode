@@ -15,8 +15,10 @@
 #define NETCODE_TEST_TCP_RESPONSE      ("TCP response data")
 #define NETCODE_TEST_UDP_CLIENT_PORT   (55156)
 #define NETCODE_TEST_UDP_SERVER_PORT   (55157)
-#define NETCODE_TEST_UDP_REQUEST       ("UDP request data")
-#define NETCODE_TEST_UDP_RESPONSE      ("UDP response data")
+#define NETCODE_TEST_UDP_REQUEST1      ("UDP request data 1")
+#define NETCODE_TEST_UDP_RESPONSE1     ("UDP response data 1")
+#define NETCODE_TEST_UDP_REQUEST2      ("UDP request data 2")
+#define NETCODE_TEST_UDP_RESPONSE2     ("UDP response data 2")
 
 #ifdef __cplusplus
 extern "C" {
