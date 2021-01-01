@@ -179,7 +179,8 @@ int main (int argc, char **argv)
    for (size_t i=0; argv[1] && i<sizeof tests / sizeof tests[0]; i++) {
       if ((strcmp (tests[i].name, argv[1]))==0) {
          ret = tests[i].fptr ();
-         NETCODE_UTIL_LOG ("CLIENT [%s]: %s\n", tests[i].name, ret ? "failed" : "passed");
+         NETCODE_UTIL_LOG ("CLIENT [%s]: %s\n", tests[i].name, ret ? "failed" : "passed",
+                                                netcode_util_strerror (netcode_util_errno ()));
          goto errorexit;
       }
    }

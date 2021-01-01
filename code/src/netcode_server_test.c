@@ -135,7 +135,7 @@ int udp_test (void)
       goto errorexit;
    }
 
-   if (rc == 0 && !*remote_ip) {
+   if (rc == 0 && !remote_ip) {
       NETCODE_UTIL_LOG ("SERVER-UDP: Timed out waiting for datagram\n");
       goto errorexit;
    }
@@ -202,7 +202,8 @@ int main (int argc, char **argv)
    for (size_t i=0; argv[1] && i<sizeof tests / sizeof tests[0]; i++) {
       if ((strcmp (tests[i].name, argv[1]))==0) {
          ret = tests[i].fptr ();
-            NETCODE_UTIL_LOG ("SERVER [%s]: %s\n", tests[i].name, ret ? "failed" : "passed");
+         NETCODE_UTIL_LOG ("SERVER [%s]: %s\n", tests[i].name, ret ? "failed" : "passed",
+                                                netcode_util_strerror (netcode_util_errno ()));
          goto errorexit;
       }
    }

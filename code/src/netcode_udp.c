@@ -294,7 +294,7 @@ size_t netcode_udp_send_array (int fd, char *remote_host, uint16_t port,
    }
 
    for (size_t i=0; i<nbuffers; i++) {
-      memcpy (&txbuf_idx, buffers[i], buffer_lengths[i]);
+      memcpy (&txbuf[txbuf_idx], buffers[i], buffer_lengths[i]);
       txbuf_idx += buffer_lengths[i];
    }
 
