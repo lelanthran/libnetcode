@@ -234,8 +234,8 @@ errorexit:
    return retval;
 }
 
-size_t netcode_udp_send (int fd, char *remote_host, uint16_t port,
-                         uint8_t *buf, size_t buflen)
+static size_t netcode_udp_send_single (int fd, char *remote_host, uint16_t port,
+                                       void *buf, size_t buflen)
 {
    ssize_t txed = 0;
    int flags = 0;
@@ -274,5 +274,94 @@ size_t netcode_udp_send (int fd, char *remote_host, uint16_t port,
    }
 
    return (size_t)txed;
+}
+
+size_t netcode_udp_send_array (int fd, char *remote_host, uint16_t port,
+                               size_t nbuffers,
+                               void **buffers, size_t *buffer_lengths)
+{
+   uint8_t *txbuf = NULL;
+   size_t txbuf_len = 0;
+   size_t txbuf_idx = 0;
+   size_t nbytes = 0;
+
+   for (size_t i=0; i<nbuffers; i++) {
+      txbuf_len += buffer_lengths[i];
+   }
+   if (!(txbuf = malloc (txbuf_len * (sizeof *txbuf)))) {
+      NETCODE_UTIL_LOG ("Error: Out of memory\n");
+      return (size_t)-1;
+   }
+
+   for (size_t i=0; i<nbuffers; i++) {
+      memcpy (&txbuf_idx, buffers[i], buffer_lengths[i]);
+      txbuf_idx += buffer_lengths[i];
+   }
+
+   nbytes = netcode_udp_send_single (fd, remote_host, port, txbuf, txbuf_len);
+   free (txbuf);
+   return nbytes;
+}
+
+size_t netcode_udp_send (int fd, char *remote_host, uint16_t port,
+                         void *buf1, size_t buflen1,
+                         ...)
+{
+   va_list ap;
+   va_start (ap, buflen1);
+   size_t nbytes = netcode_udp_sendv (fd, remote_host, port, buf1, buflen1, ap);
+   va_end (ap);
+   return nbytes;
+}
+
+size_t netcode_udp_sendv (int fd, char *remote_host, uint16_t port,
+                          void *buf1, size_t buflen1,
+                          va_list ap)
+{
+   size_t nbytes = 0;
+   void **txbuffers = NULL;
+   size_t *txbuffer_lengths = NULL;
+   size_t nbuffers = 0;
+   va_list vc;
+   void *tmp = buf1;
+   size_t tmplen = 0;
+
+   va_copy (vc, ap);
+   for (size_t i=0; tmp; i++) {
+      nbuffers++;
+      tmp = va_arg (vc, void *);
+      tmplen = va_arg (vc, size_t);
+   }
+   (void)tmplen;
+   va_end (vc);
+
+   if (!(txbuffers = calloc (nbuffers + 1, sizeof *txbuffers))) {
+      NETCODE_UTIL_LOG ("Error: Out of memory\n");
+      return (size_t)-1;
+   }
+
+   if (!(txbuffer_lengths = calloc (nbuffers + 1, sizeof *txbuffer_lengths))) {
+      free (txbuffers);
+      NETCODE_UTIL_LOG ("Error: Out of memory\n");
+      return (size_t)-1;
+   }
+
+   va_copy (vc, ap);
+   for (size_t i=0; buf1; i++) {
+      txbuffers[i] = buf1;
+      txbuffer_lengths[i] = buflen1;
+      buf1 = va_arg (vc, void *);
+      buflen1 = va_arg (vc, size_t);
+   }
+   va_end (vc);
+
+   nbytes = netcode_udp_send_array (fd, remote_host, port,
+                                    nbuffers,
+                                    txbuffers, txbuffer_lengths);
+
+   free (txbuffers);
+   free (txbuffer_lengths);
+
+   return nbytes;
 }
 

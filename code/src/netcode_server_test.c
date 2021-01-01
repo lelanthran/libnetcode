@@ -160,7 +160,8 @@ int udp_test (void)
 
    rc = netcode_udp_send (udp_socket, remote_ip, NETCODE_TEST_UDP_CLIENT_PORT,
                           (uint8_t *)NETCODE_TEST_UDP_RESPONSE,
-                          strlen (NETCODE_TEST_UDP_RESPONSE) + 1);
+                          strlen (NETCODE_TEST_UDP_RESPONSE) + 1, 
+                          NULL);
    if (rc != (strlen (NETCODE_TEST_UDP_RESPONSE) + 1)) {
       NETCODE_UTIL_LOG ("SERVER-UDP: Failed to transmit to [%s], udp_send() returned %zu\n",
                         remote_ip,

@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,15 +59,37 @@ extern "C" {
                             uint8_t **buf, size_t *buflen,
                             size_t timeout);
 
-   // Will send the data in 'buf' on the datagram socket 'fd'. If the
-   // parameter 'remote_host' is not NULL, then the datagram will be
-   // sent to the host specified in 'remote_host'.
+   // Will send the data in the buffers specified on the datagram socket
+   // 'fd'. If the parameter 'remote_host' is not NULL, then the datagram
+   // will be sent to the host specified in 'remote_host'.
+   //
+   // The buffers are all packaged into a single datagram in the order
+   // they are specified with no padding between the buffers. Each buffer
+   // is specified as a tuple of {pointer, length}.
    //
    // If remote_host is NULL then the datagram will be sent to the host
    // specified in the netcode_udp_socket() call that was used to create
    // the 'fd'.
+   //
+   // The variants differ only in how the buffers are specified:
+   //    send_array() takes an array of buffer pointers and an array
+   //       of buffer lengths. buf_array[i] will have buf_length[i].
+   //    send() takes { buffer, buffer_length } parameters, repeated
+   //       for each buffer, terminated with a NULL pointer.
+   //    sendv() takes { buffer, buffer_length } parameters, repeated
+   //       for each buffer, terminated with a NULL pointer, using the
+   //       va_list pointer instead of literal parameters.
+   size_t netcode_udp_send_array (int fd, char *remote_host, uint16_t port,
+                                  size_t nbuffers,
+                                  void **buffers, size_t *buffer_lengths);
+
    size_t netcode_udp_send (int fd, char *remote_host, uint16_t port,
-                            uint8_t *buf, size_t buflen);
+                            void *buf1, size_t buflen1,
+                            ...);
+
+   size_t netcode_udp_sendv (int fd, char *remote_host, uint16_t port,
+                             void *buf1, size_t buflen1,
+                             va_list ap);
 
 #ifdef __cplusplus
 };

@@ -99,7 +99,8 @@ int udp_test (void)
 
    rc = netcode_udp_send (udp_socket, NETCODE_TEST_SERVER, NETCODE_TEST_UDP_SERVER_PORT,
                           (uint8_t *)NETCODE_TEST_UDP_REQUEST,
-                          strlen (NETCODE_TEST_UDP_REQUEST) + 1);
+                          strlen (NETCODE_TEST_UDP_REQUEST) + 1,
+                          NULL);
 
    if (rc != (strlen (NETCODE_TEST_UDP_REQUEST) + 1)) {
       NETCODE_UTIL_LOG ("CLIENT-UDP: Error %i to transmit to [%s]: %s\n",
