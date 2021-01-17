@@ -234,7 +234,7 @@ errorexit:
    return retval;
 }
 
-static size_t netcode_udp_send_single (int fd, char *remote_host, uint16_t port,
+static size_t netcode_udp_send_single (int fd, const char *remote_host, uint16_t port,
                                        void *buf, size_t buflen)
 {
    ssize_t txed = 0;
@@ -242,11 +242,11 @@ static size_t netcode_udp_send_single (int fd, char *remote_host, uint16_t port,
    struct sockaddr_in dest_addr;
    struct hostent *host_addr = NULL;
 
-   if (remote_host && port) {
-      memset (&dest_addr, 0, sizeof dest_addr);
-      dest_addr.sin_family = AF_INET;
-      dest_addr.sin_port = htons (port);
+   memset (&dest_addr, 0, sizeof dest_addr);
+   dest_addr.sin_family = AF_INET;
+   dest_addr.sin_port = htons (port);
 
+   if (remote_host && port) {
       if ((host_addr = gethostbyname (remote_host))!=NULL) {
          memcpy (&dest_addr.sin_addr.s_addr, host_addr->h_addr_list[0],
                  sizeof dest_addr.sin_addr.s_addr);
@@ -276,9 +276,9 @@ static size_t netcode_udp_send_single (int fd, char *remote_host, uint16_t port,
    return (size_t)txed;
 }
 
-size_t netcode_udp_send_array (int fd, char *remote_host, uint16_t port,
-                               size_t nbuffers,
-                               void **buffers, size_t *buffer_lengths)
+size_t netcode_udp_senda (int fd, const char *remote_host, uint16_t port,
+                          size_t nbuffers,
+                          void **buffers, size_t *buffer_lengths)
 {
    uint8_t *txbuf = NULL;
    size_t txbuf_len = 0;
@@ -303,7 +303,7 @@ size_t netcode_udp_send_array (int fd, char *remote_host, uint16_t port,
    return nbytes;
 }
 
-size_t netcode_udp_send (int fd, char *remote_host, uint16_t port,
+size_t netcode_udp_send (int fd, const char *remote_host, uint16_t port,
                          void *buf1, size_t buflen1,
                          ...)
 {
@@ -314,7 +314,7 @@ size_t netcode_udp_send (int fd, char *remote_host, uint16_t port,
    return nbytes;
 }
 
-size_t netcode_udp_sendv (int fd, char *remote_host, uint16_t port,
+size_t netcode_udp_sendv (int fd, const char *remote_host, uint16_t port,
                           void *buf1, size_t buflen1,
                           va_list ap)
 {
@@ -355,9 +355,9 @@ size_t netcode_udp_sendv (int fd, char *remote_host, uint16_t port,
    }
    va_end (vc);
 
-   nbytes = netcode_udp_send_array (fd, remote_host, port,
-                                    nbuffers,
-                                    txbuffers, txbuffer_lengths);
+   nbytes = netcode_udp_senda (fd, remote_host, port,
+                               nbuffers,
+                               txbuffers, txbuffer_lengths);
 
    free (txbuffers);
    free (txbuffer_lengths);
