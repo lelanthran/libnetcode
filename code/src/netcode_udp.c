@@ -117,6 +117,7 @@ size_t netcode_udp_wait (int fd, char **remote_host,
    bool error = true;
    size_t retval = (size_t)-1;
 
+   char rhost[21];
    struct timeval tv = { timeout , 0 };
    int error_code = 0;
    socklen_t error_code_len = sizeof error_code;
@@ -130,7 +131,6 @@ size_t netcode_udp_wait (int fd, char **remote_host,
 
    SAFETY_CHECK;
 
-   *remote_host = NULL;
    *buf = NULL;
    *buflen = 0;
 
@@ -165,21 +165,25 @@ size_t netcode_udp_wait (int fd, char **remote_host,
       }
 
       // Copy the addr info
-      *remote_host = malloc (17);
-      if (!*remote_host) {
-         goto errorexit;
+
+      if (remote_host) {
+         uint8_t bytes[4];
+         bytes[3] = (addr_remote.sin_addr.s_addr >> 24) & 0xff;
+         bytes[2] = (addr_remote.sin_addr.s_addr >> 16) & 0xff;
+         bytes[1] = (addr_remote.sin_addr.s_addr >>  8) & 0xff;
+         bytes[0] = (addr_remote.sin_addr.s_addr      ) & 0xff;
+
+         snprintf (rhost, sizeof rhost, "%u.%u.%u.%u", bytes[0],
+                                                       bytes[1],
+                                                       bytes[2],
+                                                       bytes[3]);
+
+         size_t rhostlen = strlen (rhost);
+         if (!(*remote_host = malloc (rhostlen + 1))) {
+            goto errorexit;
+         }
+         strcpy (*remote_host, rhost);
       }
-
-      uint8_t bytes[4];
-      bytes[3] = (addr_remote.sin_addr.s_addr >> 24) & 0xff;
-      bytes[2] = (addr_remote.sin_addr.s_addr >> 16) & 0xff;
-      bytes[1] = (addr_remote.sin_addr.s_addr >>  8) & 0xff;
-      bytes[0] = (addr_remote.sin_addr.s_addr      ) & 0xff;
-
-      snprintf (*remote_host, 16, "%u.%u.%u.%u", bytes[0],
-                                                 bytes[1],
-                                                 bytes[2],
-                                                 bytes[3]);
 
       // Zero length datagram received. We're returning nothing except the
       // remote peer's address info.
@@ -226,8 +230,10 @@ errorexit:
       free (*buf);
       *buf = NULL;
       *buflen = 0;
-      free (*remote_host);
-      *remote_host = NULL;
+      if (remote_host) {
+         free (*remote_host);
+         *remote_host = NULL;
+      }
       retval = (size_t)-1;
    }
 
