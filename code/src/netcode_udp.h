@@ -71,6 +71,7 @@ extern "C" {
    // specified in the netcode_udp_socket() call that was used to create
    // the 'fd'.
    //
+   // RETURNS: (size_t)-1 on error, the number of bytes transmitted on success.
    // The variants differ only in how the buffers are specified:
    //    senda() takes an array of buffer pointers and an array
    //       of buffer lengths. buf_array[i] will have buf_length[i].
