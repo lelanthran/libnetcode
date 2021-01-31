@@ -5,6 +5,8 @@
 3. Ported to Windows.
 4. Fixed bug in udp_wait(): timing out was returning -1 instead of
    zero.
+5. Fixed bug in udp_send(): was sometimes returning success on error
+   and error on success.
 
 # v1.0.1 - Tue 29 Dec 2020 09:19:48 SAST
 

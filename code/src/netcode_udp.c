@@ -271,9 +271,9 @@ static size_t netcode_udp_send_single (int fd, const char *remote_host, uint16_t
       }
    } else {
 #ifdef PLATFORM_Windows
-      if ((txed = sendto (fd, (char *)buf,  (int)buflen, flags, NULL, 0))) {
+      if ((txed = sendto (fd, (char *)buf,  (int)buflen, flags, NULL, 0))==-1) {
 #else
-      if ((txed = sendto (fd, buf,  buflen, flags, NULL, 0))) {
+      if ((txed = sendto (fd, buf,  buflen, flags, NULL, 0))==-1) {
 #endif
          return (size_t)-1;
       }
