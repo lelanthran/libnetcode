@@ -7,6 +7,8 @@
    zero.
 5. Fixed bug in udp_send(): was sometimes returning success on error
    and error on success.
+6. Added support for returning datagram source port in parameter
+   'remote_port' when receiving datagrams.
 
 # v1.0.1 - Tue 29 Dec 2020 09:19:48 SAST
 

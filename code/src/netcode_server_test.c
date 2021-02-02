@@ -107,6 +107,7 @@ int udp_test (void)
    int ret = EXIT_FAILURE;
    uint8_t *rxdata = NULL;
    char *remote_ip = NULL;
+   uint16_t remote_port = 0;
    char *tmp = NULL;
    size_t rxlen = 0;
    size_t rc = 0;
@@ -124,7 +125,7 @@ int udp_test (void)
 
    printf ("done.\nSERVER-UDP: Waiting for incoming datagram ... ");
 
-   rc = netcode_udp_wait (udp_socket, &remote_ip, &rxdata, &rxlen, TIMEOUT);
+   rc = netcode_udp_wait (udp_socket, &remote_ip, &remote_port, &rxdata, &rxlen, TIMEOUT);
 
    printf ("done\n");
 
@@ -159,7 +160,7 @@ int udp_test (void)
       goto errorexit;
    }
 
-   printf ("SERVER-UDP: Received [%s%s] from [%s]\n", rxdata, part2, remote_ip);
+   printf ("SERVER-UDP: Received [%s%s] from [%s:%u]\n", rxdata, part2, remote_ip, remote_port);
 
    rc = netcode_udp_send (udp_socket, remote_ip, NETCODE_TEST_UDP_CLIENT_PORT,
                           (uint8_t *)NETCODE_TEST_UDP_RESPONSE1,

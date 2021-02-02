@@ -55,7 +55,7 @@ extern "C" {
    // the remote host's ip address will be copied into '*remote_host'
    // which the caller must free.
    //
-   size_t netcode_udp_wait (int fd, char **remote_host,
+   size_t netcode_udp_wait (int fd, char **remote_host, uint16_t *remote_port,
                             uint8_t **buf, size_t *buflen,
                             size_t timeout);
 

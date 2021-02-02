@@ -81,6 +81,7 @@ int udp_test (void)
    int ret = EXIT_FAILURE;
    uint8_t *rxdata = NULL;
    char *remote_ip = NULL;
+   uint16_t remote_port = 0;
    char *tmp = NULL;
    size_t rxlen = 0;
    size_t rc = 0;
@@ -105,9 +106,9 @@ int udp_test (void)
                           NULL);
 
    if (rc != (strlen (NETCODE_TEST_UDP_REQUEST1) + 1 + strlen (NETCODE_TEST_UDP_REQUEST2) + 1)) {
-      NETCODE_UTIL_LOG ("CLIENT-UDP: Error %i to transmit to [%s]: %s\n",
+      NETCODE_UTIL_LOG ("CLIENT-UDP: Error %i to transmit to [%s:%u]: %s\n",
                         netcode_util_errno (),
-                        remote_ip,
+                        NETCODE_TEST_SERVER, NETCODE_TEST_UDP_SERVER_PORT,
                         netcode_util_strerror (netcode_util_errno ()));
       goto errorexit;
    }
@@ -116,7 +117,7 @@ int udp_test (void)
 
    printf ("CLIENT-UDP: Waiting for response datagram ... ");
 
-   rc = netcode_udp_wait (udp_socket, &remote_ip, &rxdata, &rxlen, TIMEOUT);
+   rc = netcode_udp_wait (udp_socket, &remote_ip, &remote_port, &rxdata, &rxlen, TIMEOUT);
 
    printf ("done\n");
 
@@ -132,8 +133,8 @@ int udp_test (void)
       goto errorexit;
    }
 
-   printf ("CLIENT-UDP: Received %zu/%zu bytes from [%s]\n",
-           rc, rxlen, remote_ip);
+   printf ("CLIENT-UDP: Received %zu/%zu bytes from [%s:%u]\n",
+           rc, rxlen, remote_ip, remote_port);
 
    uint8_t *part2 = &rxdata[strlen (NETCODE_TEST_UDP_RESPONSE1) + 1];
    if (((memcmp (NETCODE_TEST_UDP_RESPONSE1, rxdata, strlen (NETCODE_TEST_UDP_RESPONSE1)))!=0) ||

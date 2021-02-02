@@ -110,7 +110,7 @@ int netcode_udp_socket (uint16_t listen_port, const char *default_host)
 }
 
 
-size_t netcode_udp_wait (int fd, char **remote_host,
+size_t netcode_udp_wait (int fd, char **remote_host, uint16_t *remote_port,
                          uint8_t **buf, size_t *buflen,
                          size_t timeout)
 {
@@ -183,6 +183,9 @@ size_t netcode_udp_wait (int fd, char **remote_host,
             goto errorexit;
          }
          strcpy (*remote_host, rhost);
+         if (remote_port) {
+            *remote_port = ntohs (addr_remote.sin_port);
+         }
       }
 
       // Zero length datagram received. We're returning nothing except the
