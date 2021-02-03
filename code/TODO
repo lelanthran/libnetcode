@@ -1,4 +1,0 @@
-========================================
-Change tcp transmission routine to multi-buffer transmission routines. This
-makes it easier for clients to assemble fields into a single transmission
-without having to assemble the transmit buffer themselves.
