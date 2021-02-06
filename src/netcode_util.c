@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#include <arpa/inet.h>
+
 #include "netcode_util.h"
 
 /* ***************************************************************** */
@@ -141,3 +143,37 @@ int netcode_util_close (int fd)
    return close (fd);
 }
 
+char *netcode_util_sockaddr_to_str (const struct sockaddr *sa)
+{
+#define UNKNOWN_AF      ("Unknown Address Family")
+   char *ret = NULL;
+   if (!sa) {
+      ret = calloc (1, 2);
+      ret[0] = 0;
+      return ret;
+   }
+
+   switch (sa->sa_family) {
+      case AF_INET:
+         if (!(ret = calloc (1, INET_ADDRSTRLEN + 1)))
+            return NULL;
+         inet_ntop (AF_INET, &(((struct sockaddr_in *)sa)->sin_addr),
+                    ret, INET_ADDRSTRLEN);
+         break;
+
+      case AF_INET6:
+         if (!(ret = calloc (1, INET6_ADDRSTRLEN + 1)))
+            return NULL;
+         inet_ntop (AF_INET, &(((struct sockaddr_in6 *)sa)->sin6_addr),
+                    ret, INET6_ADDRSTRLEN);
+         break;
+
+      default:
+         if (!(ret = calloc (1, strlen (UNKNOWN_AF) + 1)))
+            return NULL;
+         strcpy (ret, UNKNOWN_AF);
+         break;
+   }
+
+   return ret;
+}

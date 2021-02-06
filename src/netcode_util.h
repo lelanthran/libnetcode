@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include <sys/socket.h>
+
 #define NETCODE_UTIL_LOG(...)       do {\
    printf ("[%s:%i] ", __FILE__, __LINE__);\
    printf (__VA_ARGS__);\
@@ -30,6 +32,9 @@ extern "C" {
    const char *netcode_util_strerror (int err);
 
    int netcode_util_close (int fd);
+
+   // Caller must free the returned value
+   char *netcode_util_sockaddr_to_str (const struct sockaddr *sa);
 
 
 #ifdef __cplusplus

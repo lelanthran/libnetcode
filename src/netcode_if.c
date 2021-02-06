@@ -94,7 +94,39 @@ static netcode_if_t *netcode_if_new (uint64_t if_flags,
 #ifdef PLATFORM_POSIX
 
 #include <sys/types.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <linux/netdevice.h>
 #include <ifaddrs.h>
+
+static uint64_t if_reflag (uint64_t flags)
+{
+   uint64_t ret = 0;
+
+#define CHECKSET(checkflag,setflag)    if (flags & checkflag) ret |= setflag
+   CHECKSET (IFF_UP,          NETCODE_IFF_UP);
+   CHECKSET (IFF_BROADCAST,   NETCODE_IFF_BROADCAST);
+   CHECKSET (IFF_DEBUG,       NETCODE_IFF_DEBUG);
+   CHECKSET (IFF_LOOPBACK,    NETCODE_IFF_LOOPBACK);
+   CHECKSET (IFF_POINTOPOINT, NETCODE_IFF_POINTOPOINT);
+   CHECKSET (IFF_RUNNING,     NETCODE_IFF_RUNNING);
+   CHECKSET (IFF_NOARP,       NETCODE_IFF_NOARP);
+   CHECKSET (IFF_PROMISC,     NETCODE_IFF_PROMISC);
+   CHECKSET (IFF_NOTRAILERS,  NETCODE_IFF_NOTRAILERS);
+   CHECKSET (IFF_ALLMULTI,    NETCODE_IFF_ALLMULTI);
+   CHECKSET (IFF_MASTER,      NETCODE_IFF_MASTER);
+   CHECKSET (IFF_SLAVE,       NETCODE_IFF_SLAVE);
+   CHECKSET (IFF_MULTICAST,   NETCODE_IFF_MULTICAST);
+   CHECKSET (IFF_PORTSEL,     NETCODE_IFF_PORTSEL);
+   CHECKSET (IFF_AUTOMEDIA,   NETCODE_IFF_AUTOMEDIA);
+   CHECKSET (IFF_DYNAMIC,     NETCODE_IFF_DYNAMIC);
+   CHECKSET (IFF_LOWER_UP,    NETCODE_IFF_LOWER_UP);
+   CHECKSET (IFF_DORMANT,     NETCODE_IFF_DORMANT);
+   CHECKSET (IFF_ECHO,        NETCODE_IFF_ECHO);
+#undef CHECKSET
+
+   return ret;
+}
 
 netcode_if_t **netcode_if_list_new (void)
 {
@@ -131,16 +163,23 @@ netcode_if_t **netcode_if_list_new (void)
       free (lbroadcast);   lbroadcast  = NULL;
       free (lp2p);         lp2p        = NULL;
 
-      uint64_t lflags = if_tmp->ifa_flags;
+      uint64_t lflags = if_reflag (if_tmp->ifa_flags);
       const char *lname = if_tmp->ifa_name;
 
-      // TODO: Stopped here last, must convert sock_addr to strings, and replace the
-      // default string literals below with the empty string (so that we can still free
-      // them the next time we loop);
-      if (!laddr)      laddr      = lstrdup ("default-addr");
-      if (!lnetmask)   lnetmask   = lstrdup ("default-netmask");
-      if (!lbroadcast) lbroadcast = lstrdup ("default-broadcast");
-      if (!lp2p)       lp2p       = lstrdup ("default-p2paddr");
+      laddr    = netcode_util_sockaddr_to_str (if_tmp->ifa_addr);
+      lnetmask = netcode_util_sockaddr_to_str (if_tmp->ifa_netmask);
+
+      if (if_tmp->ifa_flags & IFF_BROADCAST) {
+         lbroadcast = netcode_util_sockaddr_to_str (if_tmp->ifa_ifu.ifu_broadaddr);
+      } else {
+         lbroadcast = lstrdup ("");
+      }
+
+      if (if_tmp->ifa_flags & IFF_POINTOPOINT) {
+         lp2p = netcode_util_sockaddr_to_str (if_tmp->ifa_ifu.ifu_dstaddr);
+      } else {
+         lp2p = lstrdup ("");
+      }
 
       if (!laddr || !lnetmask ||! lbroadcast || !lp2p) {
          // TODO: Record error here
@@ -180,6 +219,10 @@ errorexit:
 
    return ret;
 }
+
+#endif
+
+
 
 void netcode_if_list_del (netcode_if_t **list)
 {
@@ -223,10 +266,7 @@ bool netcode_if_extract (const netcode_if_t *interface,
 
    error = false;
 errorexit:
-   return true;
+   return error;
 }
-
-
-#endif
 
 
