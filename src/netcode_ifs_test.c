@@ -10,7 +10,7 @@ static int ifs_test (void)
    return EXIT_FAILURE;
 }
 
-int main (int argc, char **argv)
+int main (void)
 {
    int ret = EXIT_FAILURE;
 
