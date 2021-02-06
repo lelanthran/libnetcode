@@ -9,6 +9,13 @@ static int if_test (void)
 {
    int ret = EXIT_FAILURE;
 
+   uint64_t if_flags = 0;
+   char *if_name = NULL,
+        *if_addr = NULL,
+        *if_netmask = NULL,
+        *if_broadcast = NULL,
+        *if_p2paddr = NULL;
+
    netcode_if_t **list = netcode_if_list_new ();
 
    if (!list) {
@@ -16,20 +23,47 @@ static int if_test (void)
       goto errorexit;
    }
 
+   size_t ninterfaces = 0;
    for (size_t i=0; list[i]; i++) {
-   bool netcode_if_extract (const netcode_if_t *if,
-                             uint64_t  *dst_if_flags,
-                             char **dst_if_name,
-                             char **dst_if_addr,
-                             char **dst_if_netmask,
-                             char **dst_if_broadcast,
-                             char **dst_if_p2paddr);
+      ninterfaces++;
+   }
+
+   NETCODE_UTIL_LOG ("Found %zu interfaces\n", ninterfaces);
+
+   for (size_t i=0; list[i]; i++) {
+
+      if_flags = 0;
+
+      free (if_name);      if_name      = NULL;
+      free (if_addr);      if_addr      = NULL;
+      free (if_netmask);   if_netmask   = NULL;
+      free (if_broadcast); if_broadcast = NULL;
+      free (if_p2paddr);   if_p2paddr   = NULL;
+
+      const netcode_if_t *interface = list[i];
+      bool rc = netcode_if_extract (interface,
+                                    &if_flags,
+                                    &if_name,
+                                    &if_addr,
+                                    &if_netmask,
+                                    &if_broadcast,
+                                    &if_p2paddr);
+      if (!rc) {
+         NETCODE_UTIL_LOG ("Failed to get information for interface %zu\n", i);
+      }
    }
 
    ret = EXIT_SUCCESS;
+
 errorexit:
 
-   netcode_if_list_del (flist);
+   free (if_name);
+   free (if_addr);
+   free (if_netmask);
+   free (if_broadcast);
+   free (if_p2paddr);
+
+   netcode_if_list_del (list);
 
    return ret;
 }
