@@ -5,7 +5,7 @@
 #include <inttypes.h>
 
 #include "netcode_util.h"
-#include "netcode_ifs.h"
+#include "netcode_if.h"
 
 /* ***************************************************************** */
 #if defined (OSTYPE_Darwin)
