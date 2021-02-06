@@ -20,16 +20,16 @@ static int if_test (void)
    netcode_if_t **list = netcode_if_list_new ();
 
    if (!list) {
-      NETCODE_UTIL_LOG ("Failed to get list of interfaces\n");
+      NETCODE_UTIL_LOG ("Failed to get list of ifaces\n");
       goto errorexit;
    }
 
-   size_t ninterfaces = 0;
+   size_t nifaces = 0;
    for (size_t i=0; list[i]; i++) {
-      ninterfaces++;
+      nifaces++;
    }
 
-   NETCODE_UTIL_LOG ("Found %zu interfaces\n", ninterfaces);
+   NETCODE_UTIL_LOG ("Found %zu ifaces\n", nifaces);
 
    for (size_t i=0; list[i]; i++) {
 
@@ -41,8 +41,8 @@ static int if_test (void)
       free (if_broadcast); if_broadcast = NULL;
       free (if_p2paddr);   if_p2paddr   = NULL;
 
-      const netcode_if_t *interface = list[i];
-      bool rc = netcode_if_extract (interface,
+      const netcode_if_t *iface = list[i];
+      bool rc = netcode_if_extract (iface,
                                     &if_flags,
                                     &if_name,
                                     &if_addr,
@@ -50,10 +50,10 @@ static int if_test (void)
                                     &if_broadcast,
                                     &if_p2paddr);
       if (!rc) {
-         NETCODE_UTIL_LOG ("Failed to get information for interface %zu\n", i);
+         NETCODE_UTIL_LOG ("Failed to get information for iface %zu\n", i);
       }
-      NETCODE_UTIL_LOG ("Information for interface [%zu]\n", i);
-      NETCODE_UTIL_LOG ("     interface [%s:0x%08" PRIx64 "]\n", if_name, if_flags);
+      NETCODE_UTIL_LOG ("Information for iface [%zu]\n", i);
+      NETCODE_UTIL_LOG ("     iface [%s:0x%08" PRIx64 "]\n", if_name, if_flags);
       NETCODE_UTIL_LOG ("     addr      [%s]\n", if_addr);
       NETCODE_UTIL_LOG ("     netmask   [%s]\n", if_netmask);
       NETCODE_UTIL_LOG ("     broadcast [%s]\n", if_broadcast);

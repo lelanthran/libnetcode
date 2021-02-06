@@ -34,7 +34,7 @@ extern "C" {
    netcode_if_t **netcode_if_list_new (void);
    void netcode_if_list_del (netcode_if_t **list);
 
-   bool netcode_if_extract (const netcode_if_t *interface,
+   bool netcode_if_extract (const netcode_if_t *iface,
                             uint64_t   *dst_if_flags,
                             char      **dst_if_name,
                             char      **dst_if_addr,

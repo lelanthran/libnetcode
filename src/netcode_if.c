@@ -26,18 +26,18 @@ struct netcode_if_t {
    char      *if_p2paddr;
 };
 
-static void netcode_if_del (netcode_if_t *interface)
+static void netcode_if_del (netcode_if_t *iface)
 {
-   if (!interface)
+   if (!iface)
       return;
 
-   free (interface->if_name);
-   free (interface->if_addr);
-   free (interface->if_netmask);
-   free (interface->if_broadcast);
-   free (interface->if_p2paddr);
+   free (iface->if_name);
+   free (iface->if_addr);
+   free (iface->if_netmask);
+   free (iface->if_broadcast);
+   free (iface->if_p2paddr);
 
-   free (interface);
+   free (iface);
 }
 
 static netcode_if_t *netcode_if_new (uint64_t if_flags,
@@ -85,7 +85,10 @@ static netcode_if_t *netcode_if_new (uint64_t if_flags,
 #include <windows.h>
 #include <winsock.h>
 
-// ...................
+netcode_if_t **netcode_if_list_new (void)
+{
+   return NULL;
+}
 
 #endif
 
@@ -232,7 +235,7 @@ void netcode_if_list_del (netcode_if_t **list)
    free (list);
 }
 
-bool netcode_if_extract (const netcode_if_t *interface,
+bool netcode_if_extract (const netcode_if_t *iface,
                          uint64_t   *dst_if_flags,
                          char      **dst_if_name,
                          char      **dst_if_addr,
@@ -242,11 +245,11 @@ bool netcode_if_extract (const netcode_if_t *interface,
 {
    bool error = true;
 
-   if (!interface)
+   if (!iface)
       return false;
 
    if (dst_if_flags)
-      *dst_if_flags = interface->if_flags;
+      *dst_if_flags = iface->if_flags;
 
 #define CONDITIONAL_STRCPY(dst,src)      do {\
    if (dst) {\
@@ -256,11 +259,11 @@ bool netcode_if_extract (const netcode_if_t *interface,
    }\
 } while (0)
 
-   CONDITIONAL_STRCPY (dst_if_name,       interface->if_name);
-   CONDITIONAL_STRCPY (dst_if_addr,       interface->if_addr);
-   CONDITIONAL_STRCPY (dst_if_netmask,    interface->if_netmask);
-   CONDITIONAL_STRCPY (dst_if_broadcast,  interface->if_broadcast);
-   CONDITIONAL_STRCPY (dst_if_p2paddr,    interface->if_p2paddr);
+   CONDITIONAL_STRCPY (dst_if_name,       iface->if_name);
+   CONDITIONAL_STRCPY (dst_if_addr,       iface->if_addr);
+   CONDITIONAL_STRCPY (dst_if_netmask,    iface->if_netmask);
+   CONDITIONAL_STRCPY (dst_if_broadcast,  iface->if_broadcast);
+   CONDITIONAL_STRCPY (dst_if_p2paddr,    iface->if_p2paddr);
 
 #undef CONDITIONAL_STRCPY
 

@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include <arpa/inet.h>
-
 #include "netcode_util.h"
 
 /* ***************************************************************** */
@@ -20,6 +18,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <winsock.h>
+#include <ws2tcpip.h>
 
 #define SOCK_CLOEXEC       (0)
 #define MSG_DONTWAIT       (0)
@@ -147,6 +146,54 @@ int netcode_util_close (int fd)
    return close (fd);
 }
 
+#if 0
+PCWSTR WSAAPI InetNtopW(
+  INT        Family,
+  const VOID *pAddr,
+  PWSTR      pStringBuf,
+  size_t     StringBufSize
+);
+
+#endif
+
+#ifdef PLATFORM_Windows
+
+char *netcode_util_sockaddr_to_str (const struct sockaddr *sa)
+{
+#define UNKNOWN_AF      ("Unknown Address Family")
+   char *ret = NULL;
+   if (!sa) {
+      ret = calloc (1, 2);
+      ret[0] = 0;
+      return ret;
+   }
+
+   if (!(ret = malloc (47))) { // Docs say 46 bytes is the maximum
+      return false;
+   }
+
+   switch (sa->sa_family) {
+      case AF_INET:
+         InetNtop (AF_INET, &(((struct sockaddr_in *)sa)->sin_addr),
+                   ret, 47);
+         break;
+
+      case AF_INET6:
+         InetNtop (AF_INET6, &(((struct sockaddr_in6 *)sa)->sin6_addr),
+                   ret, 47);
+         break;
+
+      default:
+         strcpy (ret, UNKNOWN_AF);
+         break;
+   }
+
+   return ret;
+}
+#endif
+
+#ifdef PLATFORM_POSIX
+
 char *netcode_util_sockaddr_to_str (const struct sockaddr *sa)
 {
 #define UNKNOWN_AF      ("Unknown Address Family")
@@ -168,7 +215,7 @@ char *netcode_util_sockaddr_to_str (const struct sockaddr *sa)
       case AF_INET6:
          if (!(ret = calloc (1, INET6_ADDRSTRLEN + 1)))
             return NULL;
-         inet_ntop (AF_INET, &(((struct sockaddr_in6 *)sa)->sin6_addr),
+         inet_ntop (AF_INET6, &(((struct sockaddr_in6 *)sa)->sin6_addr),
                     ret, INET6_ADDRSTRLEN);
          break;
 
@@ -181,3 +228,4 @@ char *netcode_util_sockaddr_to_str (const struct sockaddr *sa)
 
    return ret;
 }
+#endif
