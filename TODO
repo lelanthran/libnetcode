@@ -1,6 +1,10 @@
 ========================================
+Provide some string->ip/ip->string conversion routines.
+
+========================================
 Urgent: Find all the non-thread-safe functions like gethostbyname
-and replace with getaddrinfo and getnameinfo.
+and replace with getaddrinfo and getnameinfo. Might be best to
+simply wrap it and provide a netcode_util_gethostbyname() function.
 
 ========================================
 Change tcp transmission routine to multi-buffer transmission routines. This
