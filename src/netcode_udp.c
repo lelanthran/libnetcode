@@ -167,25 +167,10 @@ size_t netcode_udp_wait (int fd, char **remote_host, uint16_t *remote_port,
       // Copy the addr info
 
       if (remote_host) {
-         uint8_t bytes[4];
-         bytes[3] = (addr_remote.sin_addr.s_addr >> 24) & 0xff;
-         bytes[2] = (addr_remote.sin_addr.s_addr >> 16) & 0xff;
-         bytes[1] = (addr_remote.sin_addr.s_addr >>  8) & 0xff;
-         bytes[0] = (addr_remote.sin_addr.s_addr      ) & 0xff;
-
-         snprintf (rhost, sizeof rhost, "%u.%u.%u.%u", bytes[0],
-                                                       bytes[1],
-                                                       bytes[2],
-                                                       bytes[3]);
-
-         size_t rhostlen = strlen (rhost);
-         if (!(*remote_host = malloc (rhostlen + 1))) {
-            goto errorexit;
-         }
-         strcpy (*remote_host, rhost);
-         if (remote_port) {
-            *remote_port = ntohs (addr_remote.sin_port);
-         }
+         *remote_host = netcode_util_sockaddr_to_str ((const struct sockaddr *)&addr_remote);
+      }
+      if (remote_port) {
+         *remote_port = ntohs (addr_remote.sin_port);
       }
 
       // Zero length datagram received. We're returning nothing except the

@@ -150,21 +150,7 @@ int netcode_tcp_accept (int fd, size_t timeout, char **addr, uint16_t *port)
    */
 
    if (addr) {
-      *addr = malloc (17);
-      if (!*addr) {
-         return retval;
-      }
-
-      uint8_t bytes[4];
-      bytes[3] = (ret.sin_addr.s_addr >> 24) & 0xff;
-      bytes[2] = (ret.sin_addr.s_addr >> 16) & 0xff;
-      bytes[1] = (ret.sin_addr.s_addr >>  8) & 0xff;
-      bytes[0] = (ret.sin_addr.s_addr      ) & 0xff;
-      sprintf (*addr, "%u.%u.%u.%u", bytes[0],
-                                     bytes[1],
-                                     bytes[2],
-                                     bytes[3]);
-
+      *addr = netcode_util_sockaddr_to_str ((const struct sockaddr *)&ret);
    }
 
    if (port) {
