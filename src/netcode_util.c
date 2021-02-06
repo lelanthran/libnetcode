@@ -137,7 +137,11 @@ int netcode_util_close (int fd)
     * 1. Call close() on the socket descriptor
     */
    SAFETY_CHECK;
+#ifdef PLATFORM_Windows
+   shutdown (fd, SD_BOTH);
+#else
    shutdown (fd, SHUT_RDWR);
+#endif
    return close (fd);
 }
 
