@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "netcode_util.h"
 #include "netcode_if.h"
@@ -51,6 +52,12 @@ static int if_test (void)
       if (!rc) {
          NETCODE_UTIL_LOG ("Failed to get information for interface %zu\n", i);
       }
+      NETCODE_UTIL_LOG ("Information for interface [%zu]\n", i);
+      NETCODE_UTIL_LOG ("     interface [%s:%" PRIu64 "]\n", if_name, if_flags);
+      NETCODE_UTIL_LOG ("     addr      [%s]\n", if_addr);
+      NETCODE_UTIL_LOG ("     netmask   [%s]\n", if_netmask);
+      NETCODE_UTIL_LOG ("     broadcast [%s]\n", if_broadcast);
+      NETCODE_UTIL_LOG ("     p2paddr   [%s]\n", if_p2paddr);
    }
 
    ret = EXIT_SUCCESS;
