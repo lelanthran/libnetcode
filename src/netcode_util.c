@@ -276,31 +276,50 @@ int netcode_util_close (int fd)
 char *netcode_util_sockaddr_to_str (const struct sockaddr *sa)
 {
    LPSTR ret = NULL;
-   LPDWORD  ret_len = 0;
+   DWORD ret_len = 0;
    int rc = 0;
+
+   struct sockaddr_in sa4;
+   struct sockaddr_in6 sa6;
+   struct sockaddr *local_sa = NULL;
+   size_t local_sa_len = 0;
+
+   if (sa->sa_family == AF_INET) {
+      memset (&sa4, 0, sizeof sa4);
+      sa4.sin_family = ((struct sockaddr_in *)sa)->sin_family;
+      sa4.sin_addr = ((struct sockaddr_in *)sa)->sin_addr;
+      local_sa = (struct sockaddr *)&sa4;
+      local_sa_len = sizeof sa4;
+   }
+   if (sa->sa_family == AF_INET6) {
+      memset (&sa6, 0, sizeof sa6);
+      sa6.sin6_family = ((struct sockaddr_in6 *)sa)->sin6_family;
+      sa6.sin6_addr = ((struct sockaddr_in6 *)sa)->sin6_addr;
+      local_sa = (struct sockaddr *)&sa6;
+      local_sa_len = sizeof sa6;
+   }
+
 
    if (!(ret = malloc (1)))
       return NULL;
    ret_len = 1;
 
-   rc = WSAAddressToStringA (sa,
-                             sizeof (*sa),
+   rc = WSAAddressToStringA (local_sa,
+                             local_sa_len,
                              NULL,
                              ret,
                              &ret_len);
-
    if (rc!=-1 || ret_len==0 || (WSAGetLastError ()!=WSAEFAULT))
       return NULL;
 
    if (!(ret = malloc (ret_len + 1)))
       return NULL;
 
-   rc = WSAAddressToStringA (sa,
-                             sizeof (*sa),
+   rc = WSAAddressToStringA (local_sa,
+                             local_sa_len,
                              NULL,
                              ret,
                              &ret_len);
-
    if (rc != 0) {
       free (ret);
       ret = NULL;

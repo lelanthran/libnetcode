@@ -245,6 +245,7 @@ static size_t netcode_udp_send_single (int fd, const char *remote_host, uint16_t
          memcpy (&dest_addr.sin_addr.s_addr, host_addr->h_addr_list[0],
                  sizeof dest_addr.sin_addr.s_addr);
       } else {
+         NETCODE_UTIL_LOG ("gethostbyname(%s) failure\n", remote_host);
          return (size_t)-1;
       }
 
@@ -255,6 +256,7 @@ static size_t netcode_udp_send_single (int fd, const char *remote_host, uint16_t
       if ((txed = sendto (fd, buf, buflen, flags,
                           (const struct sockaddr *)&dest_addr, sizeof (dest_addr)))==-1) {
 #endif
+         NETCODE_UTIL_LOG ("sendto dest failure\n");
          return (size_t)-1;
       }
    } else {
@@ -263,6 +265,7 @@ static size_t netcode_udp_send_single (int fd, const char *remote_host, uint16_t
 #else
       if ((txed = sendto (fd, buf,  buflen, flags, NULL, 0))==-1) {
 #endif
+         NETCODE_UTIL_LOG ("sendto() connected failure\n");
          return (size_t)-1;
       }
    }
