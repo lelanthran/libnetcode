@@ -84,6 +84,8 @@ static netcode_if_t *netcode_if_new (uint64_t if_flags,
 #include <winsock2.h>
 #include <windows.h>
 #include <winsock.h>
+#include <iptypes.h>
+#include <iphlpapi.h>
 
 #if 0
 https://docs.microsoft.com/en-us/windows/win32/api/iphlpapi/nf-iphlpapi-getadaptersaddresses
@@ -163,6 +165,30 @@ typedef struct _IP_ADAPTER_ADDRESSES_LH {
 
 netcode_if_t **netcode_if_list_new (void)
 {
+   ULONG outbuflen = 15 * 1024;
+   PIP_ADAPTER_ADDRESSES addresses = malloc (outbuflen);
+
+   size_t attempts = 0;
+   ULONG rc = ERROR_BUFFER_OVERFLOW;
+   while ((rc = GetAdaptersAddresses (AF_UNSPEC,
+                                      0,
+                                      NULL,
+                                      &addresses,
+                                      &outbuflen)) == ERROR_BUFFER_OVERFLOW) {
+      if (attemps++ > 5)
+         break;
+      outbuflen *= 2;
+      PIP_ADAPTER_ADDRESSES *tmp = realloc (addresses, outbuflen);
+      if (!tmp)
+         break;
+      tmp = addresses;
+   }
+
+   if (rc != ERROR_NONE)  {
+      NETCODE_UTIL_LOG ("Failed rc = [%lu]\n", rc);
+   } else {
+      NETCODE_UTIL_LOG ("Scceeded rc = [%lu]\n", rc);
+   }
    return NULL;
 }
 

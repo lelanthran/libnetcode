@@ -52,7 +52,7 @@ endif
 	PLATFORM:=Windows
 	EXE_EXT:=.exe
 	LIB_EXT:=.dll
-	PLATFORM_LDFLAGS:=--L$(HOME)/lib lmingw32 -lws2_32 -lmsvcrt -lgcc
+	PLATFORM_LDFLAGS:=--L$(HOME)/lib lmingw32 -lws2_32 -lmsvcrt -lgcc -liphlpapi
 	PLATFORM_CFLAGS:= -D__USE_MINGW_ANSI_STDIO
 	ECHO:=echo -e
 endif
@@ -65,7 +65,7 @@ endif
 	PLATFORM:=Windows
 	EXE_EXT:=.exe
 	LIB_EXT:=.dll
-	PLATFORM_LDFLAGS:=-L$(HOME)/lib -lmingw32 -lws2_32 -lmsvcrt -lgcc
+	PLATFORM_LDFLAGS:=-L$(HOME)/lib -lmingw32 -lws2_32 -lmsvcrt -lgcc -liphlpapi
 	PLATFORM_CFLAGS:= -D__USE_MINGW_ANSI_STDIO
 	ECHO:=echo -e
 endif

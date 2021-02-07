@@ -40,7 +40,7 @@ extern "C" {
                             char      **dst_if_addr,
                             char      **dst_if_netmask,
                             char      **dst_if_broadcast,
-                            char      **dst_if_p4paddr);
+                            char      **dst_if_p2paddr);
 
 #ifdef __cplusplus
 };
