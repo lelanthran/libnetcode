@@ -160,32 +160,31 @@ PCWSTR WSAAPI InetNtopW(
 
 char *netcode_util_sockaddr_to_str (const struct sockaddr *sa)
 {
-#define UNKNOWN_AF      ("Unknown Address Family")
-   char *ret = NULL;
-   if (!sa) {
-      ret = calloc (1, 2);
-      ret[0] = 0;
-      return ret;
-   }
+   LPSTR ret = NULL;
+   LPDWORD  ret_len = 0;
+   int rc = 0;
 
-   if (!(ret = malloc (47))) { // Docs say 46 bytes is the maximum
-      return false;
-   }
+   rc = WSAAddressToStringA (sa,
+                             sizeof (*sa),
+                             NULL,
+                             ret,
+                             &ret_len);
 
-   switch (sa->sa_family) {
-      case AF_INET:
-         InetNtop (AF_INET, &(((struct sockaddr_in *)sa)->sin_addr),
-                   ret, 47);
-         break;
+   if (rc!=WSAEFAULT || ret_len==0)
+      return NULL;
 
-      case AF_INET6:
-         InetNtop (AF_INET6, &(((struct sockaddr_in6 *)sa)->sin6_addr),
-                   ret, 47);
-         break;
+   if (!(ret = malloc (ret_len + 1)))
+      return NULL;
 
-      default:
-         strcpy (ret, UNKNOWN_AF);
-         break;
+   rc = WSAAddressToStringA (sa,
+                             sizeof (*sa),
+                             NULL,
+                             ret,
+                             &ret_len);
+
+   if (rc != 0) {
+      free (ret);
+      ret = NULL;
    }
 
    return ret;
