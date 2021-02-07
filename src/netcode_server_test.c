@@ -162,16 +162,21 @@ int udp_test (void)
 
    printf ("SERVER-UDP: Received [%s%s] from [%s:%u]\n", rxdata, part2, remote_ip, remote_port);
 
+   netcode_util_clear_errno ();
    rc = netcode_udp_send (udp_socket, remote_ip, NETCODE_TEST_UDP_CLIENT_PORT,
                           (uint8_t *)NETCODE_TEST_UDP_RESPONSE1,
                           strlen (NETCODE_TEST_UDP_RESPONSE1) + 1,
                           (uint8_t *)NETCODE_TEST_UDP_RESPONSE2,
                           strlen (NETCODE_TEST_UDP_RESPONSE2) + 1,
                           NULL);
+   int errcode = netcode_util_errno ();
+   const char *errmsg = netcode_util_strerror (errcode);
    if (rc != (strlen (NETCODE_TEST_UDP_RESPONSE1) + 1 + strlen (NETCODE_TEST_UDP_RESPONSE2) + 1)) {
-      NETCODE_UTIL_LOG ("SERVER-UDP: Failed to transmit to [%s], udp_send() returned %zu\n",
+      NETCODE_UTIL_LOG ("SERVER-UDP: Failed to transmit to [%s], udp_send() returned %zu\n"
+                        "[%i:%s]\n",
                         remote_ip,
-                        rc);
+                        rc,
+                        errcode, errmsg);
       goto errorexit;
    }
 
