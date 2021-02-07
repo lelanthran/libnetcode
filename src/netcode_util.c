@@ -164,13 +164,17 @@ char *netcode_util_sockaddr_to_str (const struct sockaddr *sa)
    LPDWORD  ret_len = 0;
    int rc = 0;
 
+   if (!(ret = malloc (1)))
+      return NULL;
+   ret_len = 1;
+
    rc = WSAAddressToStringA (sa,
                              sizeof (*sa),
                              NULL,
                              ret,
                              &ret_len);
 
-   if (rc!=WSAEFAULT || ret_len==0)
+   if (rc!=-1 || ret_len==0 || (WSAGetLastError ()!=WSAEFAULT))
       return NULL;
 
    if (!(ret = malloc (ret_len + 1)))
