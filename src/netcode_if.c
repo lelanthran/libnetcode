@@ -166,8 +166,19 @@ typedef struct _IP_ADAPTER_ADDRESSES_LH {
 
 netcode_if_t **netcode_if_list_new (void)
 {
+   bool error = true;
+   netcode_if_t **ret = NULL;
+   size_t nitems = 0;
+   uint64_t if_flags = 0;
+   char *if_name = NULL,
+        *if_addr = NULL,
+        *if_netmask = NULL,
+        *if_broadcast = NULL,
+        *if_p2paddr = NULL;
+
    ULONG outbuflen = 15 * 1024;
-   PIP_ADAPTER_ADDRESSES addresses = malloc (outbuflen);
+   PIP_ADAPTER_ADDRESSES addresses = malloc (outbuflen),
+                         tmp = NULL;
 
    size_t attempts = 0;
    ULONG rc = ERROR_BUFFER_OVERFLOW;
@@ -176,21 +187,73 @@ netcode_if_t **netcode_if_list_new (void)
                                       NULL,
                                       addresses,
                                       &outbuflen)) == ERROR_BUFFER_OVERFLOW) {
-      if (attempts++ > 5)
+      if (attempts++ > 5) {
+         NETCODE_UTIL_LOG ("Failed after five attempts to allocate memory [%lu]\n", outbuflen);
          break;
+      }
       outbuflen *= 2;
       PIP_ADAPTER_ADDRESSES tmp = realloc (addresses, outbuflen);
-      if (!tmp)
+      if (!tmp) {
+         NETCODE_UTIL_LOG ("Out of memory realloc (%lu)\n", outbuflen);
          break;
-      tmp = addresses;
+      }
+      addresses = tmp;
    }
 
    if (rc != NO_ERROR)  {
       NETCODE_UTIL_LOG ("Failed rc = [%lu]\n", rc);
-   } else {
-      NETCODE_UTIL_LOG ("Scceeded rc = [%lu]\n", rc);
+      goto errorexit;
    }
-   return NULL;
+
+   tmp = addresses;
+   while ((tmp = tmp->Next)!=NULL)
+      nitems++;
+
+   if (!(ret = calloc (nitems + 1, sizeof *ret))) {
+      NETCODE_UTIL_LOG ("Out of memory\n");
+      goto errorexit;
+   }
+
+   tmp = addresses;
+   size_t idx = 0;
+   while ((tmp = tmp->Next)!=NULL) {
+
+      if_flags = 0;
+      if_name = NULL;
+      if_addr = NULL;
+      if_netmask = NULL;
+      if_broadcast = NULL;
+      if_p2paddr = NULL;
+
+      ret[idx] = netcode_if_new (if_flags, if_name,
+                                           if_addr,
+                                           if_netmask,
+                                           if_broadcast,
+                                           if_p2paddr);
+      if (!(ret[idx])) {
+         NETCODE_UTIL_LOG ("OOM creating interface object\n");
+         goto errorexit;
+      }
+      idx++;
+   }
+   /*
+   ret = netcode_if_new (uint64_t if_flags,
+                         const char *if_name,
+                         const char *if_addr,
+                         const char *if_netmask,
+                         const char *if_broadcast,
+                         const char *if_p2paddr)
+                         */
+
+   error = false;
+errorexit:
+   free (addresses);
+   if (error) {
+     netcode_if_list_del (ret);
+     ret = NULL;
+   }
+
+   return ret;
 }
 
 #endif
