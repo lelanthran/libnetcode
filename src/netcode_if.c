@@ -162,7 +162,71 @@ typedef struct _IP_ADAPTER_ADDRESSES_LH {
   ULONG                              Dhcpv6Iaid;
   PIP_ADAPTER_DNS_SUFFIX             FirstDnsSuffix;
 } IP_ADAPTER_ADDRESSES_LH, *PIP_ADAPTER_ADDRESSES_LH;
+
+
+typedef struct _IP_ADAPTER_UNICAST_ADDRESS_LH {
+  union {
+    ULONGLONG Alignment;
+    struct {
+      ULONG Length;
+      DWORD Flags;
+    };
+  };
+  struct _IP_ADAPTER_UNICAST_ADDRESS_LH *Next;
+  SOCKET_ADDRESS                        Address;
+  IP_PREFIX_ORIGIN                      PrefixOrigin;
+  IP_SUFFIX_ORIGIN                      SuffixOrigin;
+  IP_DAD_STATE                          DadState;
+  ULONG                                 ValidLifetime;
+  ULONG                                 PreferredLifetime;
+  ULONG                                 LeaseLifetime;
+  UINT8                                 OnLinkPrefixLength;
+} IP_ADAPTER_UNICAST_ADDRESS_LH, *PIP_ADAPTER_UNICAST_ADDRESS_LH;
+
 #endif
+
+static char *nmprefix_to_string (ULONG prefix, USHORT addr_family)
+{
+   struct sockaddr *sa = NULL;
+
+   struct sockaddr_in sa4;
+   struct sockaddr_in6 sa6;
+
+   // Warning, this won't work on Windows/ARM
+   if (addr_family == AF_INET) {
+      uint32_t nm4 = 0;
+      for (size_t i=0; i<prefix; i++) {
+         nm4 |= (1 << i);
+      }
+
+      memset (&sa4, 0, sizeof sa4);
+      sa = (struct sockaddr *)&sa4;
+      sa4.sin_family = AF_INET;
+      memcpy (&sa4.sin_addr, &nm4, sizeof sa4.sin_addr);
+   }
+
+   // Warning, this won't work on Windows/ARM
+   if (addr_family == AF_INET6) {
+      uint8_t nm6[16];
+      memset (nm6, 0, sizeof nm6);
+      for (size_t i=0; i<prefix; i++) {
+         size_t bytenum = i / 8;
+         size_t bitnum = i % 8;
+         nm6[bytenum] |= (1 << bitnum);
+      }
+
+      memset (&sa6, 0, sizeof sa6);
+      sa = (struct sockaddr *)&sa6;
+      sa6.sin6_family = AF_INET6;
+      memcpy (&sa6.sin6_addr, &nm6, sizeof sa6.sin6_addr);
+   }
+
+   if (!sa) {
+      return lstrdup ("Unknown Address Family");
+   }
+
+   return netcode_util_sockaddr_to_str (sa);
+}
 
 netcode_if_t **netcode_if_list_new (void)
 {
@@ -206,8 +270,13 @@ netcode_if_t **netcode_if_list_new (void)
    }
 
    tmp = addresses;
-   while ((tmp = tmp->Next)!=NULL)
-      nitems++;
+   while ((tmp = tmp->Next)!=NULL) {
+      PIP_ADAPTER_UNICAST_ADDRESS ip = tmp->FirstUnicastAddress;
+      while (ip) {
+         nitems++;
+         ip = ip->Next;
+      }
+   }
 
    if (!(ret = calloc (nitems + 1, sizeof *ret))) {
       NETCODE_UTIL_LOG ("Out of memory\n");
@@ -218,35 +287,37 @@ netcode_if_t **netcode_if_list_new (void)
    size_t idx = 0;
    while ((tmp = tmp->Next)!=NULL) {
 
-      if_flags = 0;
-      if_name = NULL;
-      if_addr = NULL;
-      if_netmask = NULL;
-      if_broadcast = NULL;
-      if_p2paddr = NULL;
+      PIP_ADAPTER_UNICAST_ADDRESS ip = tmp->FirstUnicastAddress;
 
-      ret[idx] = netcode_if_new (if_flags, if_name,
-                                           if_addr,
-                                           if_netmask,
-                                           if_broadcast,
-                                           if_p2paddr);
-      if (!(ret[idx])) {
-         NETCODE_UTIL_LOG ("OOM creating interface object\n");
-         goto errorexit;
+      while (ip) {
+
+         USHORT af = ip->Address.lpSockaddr->sa_family;
+
+         if_flags = 0;
+         if_name = lstrdup (tmp->AdapterName);
+         if_addr = netcode_util_sockaddr_to_str (ip->Address.lpSockaddr);
+         if_netmask = nmprefix_to_string (ip->OnLinkPrefixLength, af);
+         if_broadcast = "";
+         if_p2paddr = "";
+
+         ret[idx] = netcode_if_new (if_flags, if_name,
+                                              if_addr,
+                                              if_netmask,
+                                              if_broadcast,
+                                              if_p2paddr);
+         if (!(ret[idx])) {
+            NETCODE_UTIL_LOG ("OOM creating interface object\n");
+            goto errorexit;
+         }
+         idx++;
+         ip = ip->Next;
       }
-      idx++;
    }
-   /*
-   ret = netcode_if_new (uint64_t if_flags,
-                         const char *if_name,
-                         const char *if_addr,
-                         const char *if_netmask,
-                         const char *if_broadcast,
-                         const char *if_p2paddr)
-                         */
 
    error = false;
+
 errorexit:
+
    free (addresses);
    if (error) {
      netcode_if_list_del (ret);
@@ -420,6 +491,7 @@ bool netcode_if_extract (const netcode_if_t *iface,
 #define CONDITIONAL_STRCPY(dst,src)      do {\
    if (dst) {\
       if (((*dst) = lstrdup (src))==NULL) {\
+         NETCODE_UTIL_LOG ("Failed to copy [%s]\n", src);\
          goto errorexit;\
       }\
    }\
@@ -435,7 +507,7 @@ bool netcode_if_extract (const netcode_if_t *iface,
 
    error = false;
 errorexit:
-   return error;
+   return !error;
 }
 
 
