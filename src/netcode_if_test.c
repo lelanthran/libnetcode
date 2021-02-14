@@ -53,7 +53,7 @@ static int if_test (void)
          NETCODE_UTIL_LOG ("Failed to get information for iface %zu\n", i);
       }
       NETCODE_UTIL_LOG ("Information for iface [%zu]\n", i);
-      NETCODE_UTIL_LOG ("     iface [%s:0x%08" PRIx64 "]\n", if_name, if_flags);
+      NETCODE_UTIL_LOG ("     iface     [%s:0x%08" PRIx64 "]\n", if_name, if_flags);
       NETCODE_UTIL_LOG ("     addr      [%s]\n", if_addr);
       NETCODE_UTIL_LOG ("     netmask   [%s]\n", if_netmask);
       NETCODE_UTIL_LOG ("     broadcast [%s]\n", if_broadcast);
