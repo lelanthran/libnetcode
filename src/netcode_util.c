@@ -275,6 +275,8 @@ int netcode_util_close (int fd)
 
 char *netcode_util_sockaddr_to_str (const struct sockaddr *sa)
 {
+   SAFETY_CHECK;
+
    LPSTR ret = NULL;
    DWORD ret_len = 0;
    int rc = 0;

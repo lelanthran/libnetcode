@@ -10,6 +10,9 @@
 /* ***************************************************************** */
 static char *lstrdup (const char *src)
 {
+   if (!src)
+      return NULL;
+
    char *ret = malloc (strlen (src) + 1);
    if (ret)
       strcpy (ret, src);
@@ -270,12 +273,13 @@ netcode_if_t **netcode_if_list_new (void)
    }
 
    tmp = addresses;
-   while ((tmp = tmp->Next)!=NULL) {
+   while (tmp) {
       PIP_ADAPTER_UNICAST_ADDRESS ip = tmp->FirstUnicastAddress;
       while (ip) {
          nitems++;
          ip = ip->Next;
       }
+      tmp = tmp->Next;
    }
 
    if (!(ret = calloc (nitems + 1, sizeof *ret))) {
@@ -285,7 +289,7 @@ netcode_if_t **netcode_if_list_new (void)
 
    tmp = addresses;
    size_t idx = 0;
-   while ((tmp = tmp->Next)!=NULL) {
+   while (tmp) {
 
       PIP_ADAPTER_UNICAST_ADDRESS ip = tmp->FirstUnicastAddress;
 
@@ -312,6 +316,7 @@ netcode_if_t **netcode_if_list_new (void)
          idx++;
          ip = ip->Next;
       }
+      tmp = tmp->Next;
    }
 
    error = false;
