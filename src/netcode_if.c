@@ -297,8 +297,16 @@ netcode_if_t **netcode_if_list_new (void)
 
          USHORT af = ip->Address.lpSockaddr->sa_family;
 
+         size_t dstlen = (wcslen (tmp->FriendlyName) * 6) + 1;
+         char *dst = malloc (dstlen);
+         if (!dst) {
+            // TODO: Handle error
+            goto errorexit;
+         }
+         wcstombs (dst, tmp->FriendlyName, dstlen);
+
          if_flags = 0;
-         if_name = lstrdup (tmp->AdapterName);
+         if_name = lstrdup (dst); free (dst); dst = NULL;
          if_addr = netcode_util_sockaddr_to_str (ip->Address.lpSockaddr);
          if_netmask = nmprefix_to_string (ip->OnLinkPrefixLength, af);
          if_broadcast = "";
