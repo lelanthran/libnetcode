@@ -1,6 +1,9 @@
 # v1.0.3 - ???
 1. Added support for enumerating all the interfaces on Linux. Still need to
    add Windows support.
+2. Added Android build scripts (requires android level >= 24)
+3. Added swig to the build process so that I can JNI interfaces to this
+   library.
 
 # v1.0.2 - Sat 06 Feb 2021 13:55:08 SAST
 
