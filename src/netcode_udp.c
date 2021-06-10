@@ -45,7 +45,10 @@ static bool initialised = false;
 #ifdef PLATFORM_POSIX
 #include <unistd.h>
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
