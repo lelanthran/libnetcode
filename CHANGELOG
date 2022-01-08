@@ -1,4 +1,4 @@
-# v1.0.3 - ???
+# v1.0.3 - Sun 09 Jan 2022 00:06:25 SAST
 1. Added support for enumerating all the interfaces on Linux. Still need to
    add Windows support.
 2. Added Android build scripts (requires android level >= 24)
