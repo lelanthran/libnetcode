@@ -135,7 +135,7 @@ int netcode_tcp_accept (int fd, size_t timeout, char **addr, uint16_t *port)
    if (r==0) {
       return 0;
    }
-   retval = accept4 (fd, (struct sockaddr *)&ret, &retlen, SOCK_CLOEXEC);
+   retval = accept4 (fd, (struct sockaddr *)&ret, &retlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
    if (retval <= 0) {
       return -1;
    }

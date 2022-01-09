@@ -1,5 +1,7 @@
-# v1.0. - ???
+# v1.0.4 - ???
 1. Cosmetic updates to build output.
+2. Changed accept4() to SOCK_NONBLOCK so that signal interrupt causes an error
+   return.
 
 # v1.0.3 - Sun 09 Jan 2022 00:06:25 SAST
 1. Added support for enumerating all the interfaces on Linux. Still need to
