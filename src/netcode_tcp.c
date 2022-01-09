@@ -98,7 +98,7 @@ int netcode_tcp_server (size_t port)
    if (port==0) {
       return -1;
    }
-   fd = socket (AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
+   fd = socket (AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
    if (fd<0) {
       // NETCODE_UTIL_LOG ("socket() failed\n");
       return -1;
