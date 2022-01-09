@@ -114,8 +114,6 @@ endif
 
 INSTALL_PREFIX?=$(CURDIR)/..
 
-INSTALL_PREFIX?=$(CURDIR)/..
-
 ifneq (,$(findstring debug,$(MAKECMDGOALS)))
 OUTDIR=debug
 endif
@@ -222,6 +220,8 @@ PROG_LD=$(GCC_LD_PROG)
 LIB_LD=$(GCC_LD_LIB)
 
 INCLUDE_DIRS:= -I.\
+	-I./src\
+	-I$(INSTALL_PREFIX)/include/$(TARGET)\
 	$(foreach ipath,$(INCLUDE_PATHS),-I$(ipath))
 
 LIBDIRS:=\
@@ -408,7 +408,7 @@ swig_prep: swig-input.swig
 
 $(SWIG_WRAPPERS):	swig_prep
 	@mkdir -p wrappers/`echo $@ | cut -f 2 -d -`/swig_$(PROJNAME)
-	swig -package swig_$(PROJNAME) \
+	@swig -package swig_$(PROJNAME) \
 		-o src/swig_$(PROJNAME).c \
 		-`echo $@ | cut -f 2 -d -`\
 		-outdir wrappers/`echo $@ | cut -f 2 -d -`/swig_$(PROJNAME)\
