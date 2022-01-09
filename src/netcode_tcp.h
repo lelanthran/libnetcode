@@ -10,8 +10,8 @@ extern "C" {
 #endif
 
    /* Wait for a tcp connection on the specified port, waiting indefinitely.
-    * The fd of the connected socket is returned. On error (size_t)-1 is
-    * returned. On success the file descriptor of the socket is returned.
+    * The fd of the connected socket is returned. On error -1 is * returned.
+    * On success the file descriptor of the socket is returned.
     */
    int netcode_tcp_server (size_t port);
 
