@@ -42,7 +42,7 @@ extern "C" {
    //
    // On error (size_t)-1 will be returned. On timeout zero will be
    // returned and '*buflen ' will be set to zero, '*remote_host'
-   // will be set to NULL and the '*buf" will be set to NULL.
+   // will be set to NULL and the '*buf' will be set to NULL.
    //
    // On receipt of an empty datagram, zero will be returned and
    // *buflen will be set to zero, the '*remote_host' will be set

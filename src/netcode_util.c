@@ -317,6 +317,7 @@ char *netcode_util_sockaddr_to_str (const struct sockaddr *sa)
    if (rc!=-1 || ret_len==0 || (WSAGetLastError ()!=WSAEFAULT))
       return NULL;
 
+   free (ret);
    if (!(ret = malloc (ret_len + 1)))
       return NULL;
 
