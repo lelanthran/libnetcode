@@ -23,6 +23,7 @@
 
 #define SOCK_CLOEXEC       (0)
 #define MSG_DONTWAIT       (0)
+#define SOCK_NONBLOCK      (0)
 #define close(x)           closesocket (x)
 #define accept4(x,y,z,A)   accept (x,y,(int *)z)
 #define SEND(x,y,z)        send (x,y,z, 0)
