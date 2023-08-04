@@ -1,0 +1,15 @@
+LIBRARY   NETCODE
+EXPORTS
+   netcode_util_init
+   netcode_util_clear_errno
+   netcode_util_errno
+   netcode_util_strerror
+   netcode_util_close
+   netcode_tcp_server
+   netcode_tcp_connect
+   netcode_tcp_accept
+   netcode_tcp_write
+   netcode_tcp_read
+   netcode_udp_socket
+   netcode_udp_wait
+   netcode_udp_send

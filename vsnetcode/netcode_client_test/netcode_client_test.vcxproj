@@ -130,6 +130,11 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\netcode_client_test.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\netcode\netcode.vcxproj">
+      <Project>{bb9a1511-bc59-4d70-a0e6-f09e29f12402}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
