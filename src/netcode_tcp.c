@@ -205,7 +205,7 @@ int64_t netcode_tcp_write (socket_t fd, const void *buf, uint32_t len)
 {
    SAFETY_CHECK;
    // NETCODE_UTIL_LOG ("sending %zu bytes\n", len);
-   ssize_t retval = SEND (fd, buf, len);
+   int64_t retval = SEND (fd, buf, len);
    if (retval < 0)
       return (uint32_t)-1;
    return (uint32_t)retval;

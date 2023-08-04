@@ -243,7 +243,7 @@ static int64_t netcode_udp_send_single (socket_t fd,
                                         const char *remote_host, uint16_t port,
                                         void *buf, uint32_t buflen)
 {
-   ssize_t txed = 0;
+   int64_t txed = 0;
    int flags = 0;
    struct sockaddr_in dest_addr;
    struct hostent *host_addr = NULL;
