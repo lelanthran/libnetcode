@@ -161,11 +161,11 @@ int64_t netcode_udp_wait (socket_t fd, char **remote_host, uint16_t *remote_port
 #ifdef PLATFORM_Windows
       int max_size = 70 * 1024;
       tmp = malloc (max_size);
-      int r = recvfrom (fd, tmp, max_size, MSG_DONTWAIT | MSG_PEEK,
-                            (struct sockaddr *)&addr_remote, (int *)&addr_remote_len);
+      int64_t r = recvfrom (fd, tmp, max_size, MSG_DONTWAIT | MSG_PEEK,
+                              (struct sockaddr *)&addr_remote, (int *)&addr_remote_len);
 #else
-      int64_t  r = recvfrom (fd, NULL, 0, MSG_DONTWAIT | MSG_PEEK | MSG_TRUNC,
-                                 (struct sockaddr *)&addr_remote, &addr_remote_len);
+      int64_t r = recvfrom (fd, NULL, 0, MSG_DONTWAIT | MSG_PEEK | MSG_TRUNC,
+                              (struct sockaddr *)&addr_remote, &addr_remote_len);
 #endif
 
       // An error occurred, return errorcode
