@@ -44,9 +44,6 @@
     <ClCompile Include="..\..\src\netcode_if.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\netcode_if_test.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\netcode_tcp.c">
       <Filter>Source Files</Filter>
     </ClCompile>

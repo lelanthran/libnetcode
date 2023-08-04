@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\netcode_if.c" />
-    <ClCompile Include="..\..\src\netcode_if_test.c" />
     <ClCompile Include="..\..\src\netcode_tcp.c" />
     <ClCompile Include="..\..\src\netcode_udp.c" />
     <ClCompile Include="..\..\src\netcode_util.c" />
