@@ -10,6 +10,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnetcode", "libnetcode\libnetcode.vcxproj", "{66CD6CCF-3E13-4201-A61B-1073B0E027CB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "netcode", "netcode\netcode.vcxproj", "{BB9A1511-BC59-4D70-A0E6-F09E29F12402}"
+	ProjectSection(ProjectDependencies) = postProject
+		{66CD6CCF-3E13-4201-A61B-1073B0E027CB} = {66CD6CCF-3E13-4201-A61B-1073B0E027CB}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
