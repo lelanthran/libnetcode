@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "netcode_util.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,7 +23,7 @@ extern "C" {
    // On sending, a different host may be specified.
    // On error will return -1 and the error and error message can be
    // retrieved using the _errno() and _strerror() functions.
-   int netcode_udp_socket (uint16_t listen_port, const char *default_host);
+   socket_t netcode_udp_socket (uint16_t listen_port, const char *default_host);
 
    // Will wait not less than 'timeout' seconds for a datagram
    // on the port that the socket fd is connected on. When a datagram
@@ -40,7 +42,7 @@ extern "C" {
    // The size of the datagram will be copied into 'buflen' and
    // will also be returned.
    //
-   // On error (size_t)-1 will be returned. On timeout zero will be
+   // On error (uint32_t)-1 will be returned. On timeout zero will be
    // returned and '*buflen ' will be set to zero, '*remote_host'
    // will be set to NULL and the '*buf' will be set to NULL.
    //
@@ -55,9 +57,9 @@ extern "C" {
    // the remote host's ip address will be copied into '*remote_host'
    // which the caller must free.
    //
-   size_t netcode_udp_wait (int fd, char **remote_host, uint16_t *remote_port,
-                            uint8_t **buf, size_t *buflen,
-                            size_t timeout);
+   uint32_t netcode_udp_wait (socket_t fd, char **remote_host, uint16_t *remote_port,
+                              uint8_t **buf, uint32_t *buflen,
+                              uint32_t timeout);
 
    // Will send the data in the buffers specified on the datagram socket
    // 'fd'. If the parameter 'remote_host' is not NULL, then the datagram
@@ -71,7 +73,7 @@ extern "C" {
    // specified in the netcode_udp_socket() call that was used to create
    // the 'fd'.
    //
-   // RETURNS: (size_t)-1 on error, the number of bytes transmitted on success.
+   // RETURNS: (uint32_t)-1 on error, the number of bytes transmitted on success.
    // The variants differ only in how the buffers are specified:
    //    senda() takes an array of buffer pointers and an array
    //       of buffer lengths. buf_array[i] will have buf_length[i].
@@ -80,17 +82,17 @@ extern "C" {
    //    sendv() takes { buffer, buffer_length } parameters, repeated
    //       for each buffer, terminated with a NULL pointer, using the
    //       va_list pointer instead of literal parameters.
-   size_t netcode_udp_senda (int fd, const char *remote_host, uint16_t port,
-                             size_t nbuffers,
-                             void **buffers, size_t *buffer_lengths);
+   uint32_t netcode_udp_senda (socket_t fd, const char *remote_host, uint16_t port,
+                               uint32_t nbuffers,
+                               void **buffers, uint32_t *buffer_lengths);
 
-   size_t netcode_udp_send (int fd, const char *remote_host, uint16_t port,
-                            void *buf1, size_t buflen1,
-                            ...);
+   uint32_t netcode_udp_send (socket_t fd, const char *remote_host, uint16_t port,
+                              void *buf1, uint32_t buflen1,
+                              ...);
 
-   size_t netcode_udp_sendv (int fd, const char *remote_host, uint16_t port,
-                             void *buf1, size_t buflen1,
-                             va_list ap);
+   uint32_t netcode_udp_sendv (socket_t fd, const char *remote_host, uint16_t port,
+                               void *buf1, uint32_t buflen1,
+                               va_list ap);
 
 #ifdef __cplusplus
 };

@@ -31,6 +31,21 @@
 #define NETCODE_TEST_UDP_REQUEST2      ("UDP request data 2")
 #define NETCODE_TEST_UDP_RESPONSE2     ("UDP response data 2")
 
+#ifdef PLATFORM_Windows
+   typedef SOCKET socket_t;
+#else
+   typedef int socket_t;
+#endif
+
+
+#ifdef PLATFORM_Windows
+#  define VALID_SOCKET(x) (x!=INVALID_SOCKET)
+#else
+#  define INVALID_SOCKET  -1
+#  define VALID_SOCKET(x) (x >= 0)
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,7 +55,7 @@ extern "C" {
    int netcode_util_errno (void);
    const char *netcode_util_strerror (int err);
 
-   int netcode_util_close (int fd);
+   int netcode_util_close (socket_t fd);
 
    // Caller must free the returned value
    char *netcode_util_sockaddr_to_str (const struct sockaddr *sa);

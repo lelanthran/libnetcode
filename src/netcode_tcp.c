@@ -81,7 +81,7 @@ int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags);
 #endif
 
 
-int netcode_tcp_server (size_t port)
+socket_t netcode_tcp_server (uint16_t port)
 {
    /* ****************************************
     * 1. Call socket() to create a socket
@@ -95,12 +95,12 @@ int netcode_tcp_server (size_t port)
    addr.sin_family = AF_INET;
    addr.sin_addr.s_addr = INADDR_ANY;
    addr.sin_port = htons (port);
-   int fd = -1;
+   socket_t fd = -1;
    if (port==0) {
       return -1;
    }
    fd = socket (AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
-   if (fd<0) {
+   if (!(VALID_SOCKET(fd))) {
       // NETCODE_UTIL_LOG ("socket() failed\n");
       return -1;
    }
@@ -118,21 +118,23 @@ int netcode_tcp_server (size_t port)
    return fd;
 }
 
-int netcode_tcp_accept (int fd, size_t timeout, char **addr, uint16_t *port)
+
+
+socket_t netcode_tcp_accept (socket_t fd, uint32_t timeout_secs, char **addr, uint16_t *port)
 {
    struct sockaddr_in ret;
    socklen_t retlen = sizeof ret;
-   int retval = -1;
+   socket_t retval = -1;
 
    memset(&ret, 0xff, sizeof ret);
 
-   struct timeval tv = { timeout , 0 };
+   struct timeval tv = { timeout_secs , 0 };
    fd_set fds[3];
-   for (size_t i=0; i<sizeof fds/sizeof fds[0]; i++) {
+   for (uint32_t i=0; i<sizeof fds/sizeof fds[0]; i++) {
       FD_ZERO (&fds[i]);
       FD_SET (fd, &fds[i]);
    }
-   int r = select (fd + 1, &fds[0], &fds[1], &fds[2], &tv);
+   int r = select ((int)fd + 1, &fds[0], &fds[1], &fds[2], &tv);
    if (r==0) {
       return 0;
    }
@@ -162,7 +164,7 @@ int netcode_tcp_accept (int fd, size_t timeout, char **addr, uint16_t *port)
    return retval;
 }
 
-int netcode_tcp_connect (const char *server, size_t port)
+socket_t netcode_tcp_connect (const char *server, uint16_t port)
 {
    /* ****************************************
     * 0. Resolve the server name.
@@ -185,8 +187,9 @@ int netcode_tcp_connect (const char *server, size_t port)
          sizeof addr.sin_addr.s_addr);
 
    // Creating socket endpoint
-   int fd = socket (AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
-   if (fd<0) return -1;
+   socket_t fd = socket (AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
+   if (!(VALID_SOCKET(fd)))
+      return -1;
 
    // Connecting endpoint to the server
    if (connect (fd, (struct sockaddr *)&addr, sizeof addr)!=0) {
@@ -198,18 +201,19 @@ int netcode_tcp_connect (const char *server, size_t port)
    return fd;
 }
 
-size_t netcode_tcp_write (int fd, const void *buf, size_t len)
+uint32_t netcode_tcp_write (socket_t fd, const void *buf, uint32_t len)
 {
    SAFETY_CHECK;
    // NETCODE_UTIL_LOG ("sending %zu bytes\n", len);
    ssize_t retval = SEND (fd, buf, len);
-   if (retval<0) return (size_t)-1;
-   return retval;
+   if (retval < 0)
+      return (uint32_t)-1;
+   return (uint32_t)retval;
 }
 
-size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout)
+uint32_t netcode_tcp_read (socket_t fd, void *buf, uint32_t len, uint32_t timeout)
 {
-   size_t idx = 0;
+   uint32_t idx = 0;
    struct timeval tv = { timeout , 0 };
    unsigned char *buffer = buf;
    int countdown = 2;
@@ -221,18 +225,18 @@ size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout)
 #else
    getsockopt (fd, SOL_SOCKET, SO_ERROR, &error_code, &error_code_len);
 #endif
-   if (error_code!=0) return (size_t)-1;
+   if (error_code!=0) return (uint32_t)-1;
    SAFETY_CHECK;
    // NETCODE_UTIL_LOG ("Attempting to read %zu bytes\n", len);
    do {
       fd_set fds;
       FD_ZERO (&fds);
       FD_SET (fd, &fds);
-      int selresult = select (fd + 1, &fds, NULL, NULL, &tv);
+      int selresult = select ((int)fd + 1, &fds, NULL, NULL, &tv);
       if (selresult>0) {
          netcode_util_clear_errno ();
 #ifdef PLATFORM_Windows
-         ssize_t r = recv (fd, (char *)&buffer[idx], len-idx, MSG_DONTWAIT);
+         int32_t r = recv (fd, (char *)&buffer[idx], len-idx, MSG_DONTWAIT);
 #else
          ssize_t r = recv (fd, &buffer[idx], len-idx, MSG_DONTWAIT);
 #endif
@@ -240,11 +244,11 @@ size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout)
          // Return error immediately if an error is detected. Reading zero
          // bytes from a socket that caused a select() to return means
          // that the other side has disconnected.
-         if (netcode_util_errno ()) return idx ? idx : (size_t)-1;
-         if (r == -1) return idx ? idx : (size_t)-1;
-         if (r ==  0) return idx ? idx : (size_t)-1;
+         if (netcode_util_errno ()) return idx ? idx : (uint32_t)-1;
+         if (r == -1) return idx ? idx : (uint32_t)-1;
+         if (r ==  0) return idx ? idx : (uint32_t)-1;
 
-         idx += (size_t)r;
+         idx += r;
          // NETCODE_UTIL_LOG ("read %zu bytes\n", idx);
       }
       if (selresult==0) {
@@ -252,7 +256,7 @@ size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout)
          continue;
       }
       if (selresult<0) {
-         return (size_t)-1;
+         return (uint32_t)-1;
       }
    } while (idx<len && countdown);
    return idx;

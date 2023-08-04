@@ -260,7 +260,7 @@ const char *netcode_util_strerror (int err)
 #endif
 }
 
-int netcode_util_close (int fd)
+int netcode_util_close (socket_t fd)
 {
    /* ****************************************
     * 1. Call close() on the socket descriptor
@@ -287,7 +287,7 @@ char *netcode_util_sockaddr_to_str (const struct sockaddr *sa)
    struct sockaddr_in sa4;
    struct sockaddr_in6 sa6;
    struct sockaddr *local_sa = NULL;
-   size_t local_sa_len = 0;
+   DWORD local_sa_len = 0;
 
    if (sa->sa_family == AF_INET) {
       memset (&sa4, 0, sizeof sa4);

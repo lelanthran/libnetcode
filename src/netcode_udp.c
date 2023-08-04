@@ -81,9 +81,16 @@ int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags);
 
 #include "netcode_udp.h"
 
-int netcode_udp_socket (uint16_t listen_port, const char *default_host)
+#ifdef PLATFORM_Windows
+#  define VALID_SOCKET(x) (x!=INVALID_SOCKET)
+#else
+#  define INVALID_SOCKET  -1
+#  define VALID_SOCKET(x) (x >= 0)
+#endif
+
+socket_t netcode_udp_socket (uint16_t listen_port, const char *default_host)
 {
-   int sockfd;
+   socket_t sockfd;
    struct sockaddr_in addr;
    struct hostent *host_addr = NULL;
 
@@ -102,7 +109,8 @@ int netcode_udp_socket (uint16_t listen_port, const char *default_host)
       addr.sin_addr.s_addr = INADDR_ANY;
    }
 
-   if ((sockfd = socket (AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0)) < 0) {
+   sockfd = socket (AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+   if (!(VALID_SOCKET(sockfd))) {
       return -1;
    }
 
@@ -113,14 +121,13 @@ int netcode_udp_socket (uint16_t listen_port, const char *default_host)
 }
 
 
-size_t netcode_udp_wait (int fd, char **remote_host, uint16_t *remote_port,
-                         uint8_t **buf, size_t *buflen,
-                         size_t timeout)
+uint32_t netcode_udp_wait (socket_t fd, char **remote_host, uint16_t *remote_port,
+                         uint8_t **buf, uint32_t *buflen,
+                         uint32_t timeout)
 {
    bool error = true;
-   size_t retval = (size_t)-1;
+   uint32_t retval = (uint32_t)-1;
 
-   char rhost[21];
    struct timeval tv = { timeout , 0 };
    int error_code = 0;
    socklen_t error_code_len = sizeof error_code;
@@ -148,13 +155,13 @@ size_t netcode_udp_wait (int fd, char **remote_host, uint16_t *remote_port,
    fd_set fds;
    FD_ZERO (&fds);
    FD_SET (fd, &fds);
-   int selresult = select (fd + 1, &fds, NULL, NULL, &tv);
+   int selresult = select ((int)fd + 1, &fds, NULL, NULL, &tv);
    if (selresult > 0) {
       netcode_util_clear_errno ();
 #ifdef PLATFORM_Windows
-      size_t max_size = 70 * 1024;
+      int max_size = 70 * 1024;
       tmp = malloc (max_size);
-      ssize_t r = recvfrom (fd, tmp, max_size, MSG_DONTWAIT | MSG_PEEK,
+      int r = recvfrom (fd, tmp, max_size, MSG_DONTWAIT | MSG_PEEK,
                             (struct sockaddr *)&addr_remote, (int *)&addr_remote_len);
 #else
       ssize_t r = recvfrom (fd, NULL, 0, MSG_DONTWAIT | MSG_PEEK | MSG_TRUNC,
@@ -163,7 +170,7 @@ size_t netcode_udp_wait (int fd, char **remote_host, uint16_t *remote_port,
 
       // An error occurred, return errorcode
       if (r < 0 ) {
-         NETCODE_UTIL_LOG ("First possible error: %i, %zi\n", errno, r);
+         NETCODE_UTIL_LOG ("First possible error: %i, %i\n", errno, r);
          goto errorexit;
       }
 
@@ -185,7 +192,7 @@ size_t netcode_udp_wait (int fd, char **remote_host, uint16_t *remote_port,
       }
 
       // Valid length in r. Reallocate the dst buffer and try again.
-      *buflen = (size_t)r;
+      *buflen = r;
       if (!(*buf = malloc (*buflen))) {
          goto errorexit;
       }
@@ -195,7 +202,7 @@ size_t netcode_udp_wait (int fd, char **remote_host, uint16_t *remote_port,
       r = recvfrom (fd, *buf, *buflen, MSG_DONTWAIT, NULL, NULL);
 #endif
 
-      if ((size_t)r != *buflen) {
+      if ((uint32_t)r != *buflen) {
          goto errorexit; // Underlying error in the socket implementation
       }
    }
@@ -225,14 +232,14 @@ errorexit:
          free (*remote_host);
          *remote_host = NULL;
       }
-      retval = (size_t)-1;
+      retval = (uint32_t)-1;
    }
 
    return retval;
 }
 
-static size_t netcode_udp_send_single (int fd, const char *remote_host, uint16_t port,
-                                       void *buf, size_t buflen)
+static uint32_t netcode_udp_send_single (socket_t fd, const char *remote_host, uint16_t port,
+                                       void *buf, uint32_t buflen)
 {
    ssize_t txed = 0;
    int flags = 0;
@@ -249,7 +256,7 @@ static size_t netcode_udp_send_single (int fd, const char *remote_host, uint16_t
                  sizeof dest_addr.sin_addr.s_addr);
       } else {
          NETCODE_UTIL_LOG ("gethostbyname(%s) failure\n", remote_host);
-         return (size_t)-1;
+         return (uint32_t)-1;
       }
 
 #ifdef PLATFORM_Windows
@@ -260,7 +267,7 @@ static size_t netcode_udp_send_single (int fd, const char *remote_host, uint16_t
                           (const struct sockaddr *)&dest_addr, sizeof (dest_addr)))==-1) {
 #endif
          NETCODE_UTIL_LOG ("sendto dest failure\n");
-         return (size_t)-1;
+         return (uint32_t)-1;
       }
    } else {
 #ifdef PLATFORM_Windows
@@ -269,31 +276,31 @@ static size_t netcode_udp_send_single (int fd, const char *remote_host, uint16_t
       if ((txed = sendto (fd, buf,  buflen, flags, NULL, 0))==-1) {
 #endif
          NETCODE_UTIL_LOG ("sendto() connected failure\n");
-         return (size_t)-1;
+         return (uint32_t)-1;
       }
    }
 
-   return (size_t)txed;
+   return (uint32_t)txed;
 }
 
-size_t netcode_udp_senda (int fd, const char *remote_host, uint16_t port,
-                          size_t nbuffers,
-                          void **buffers, size_t *buffer_lengths)
+uint32_t netcode_udp_senda (socket_t fd, const char *remote_host, uint16_t port,
+                          uint32_t nbuffers,
+                          void **buffers, uint32_t *buffer_lengths)
 {
    uint8_t *txbuf = NULL;
-   size_t txbuf_len = 0;
-   size_t txbuf_idx = 0;
-   size_t nbytes = 0;
+   uint32_t txbuf_len = 0;
+   uint32_t txbuf_idx = 0;
+   uint32_t nbytes = 0;
 
-   for (size_t i=0; i<nbuffers; i++) {
+   for (uint32_t i=0; i<nbuffers; i++) {
       txbuf_len += buffer_lengths[i];
    }
    if (!(txbuf = malloc (txbuf_len * (sizeof *txbuf)))) {
       NETCODE_UTIL_LOG ("Error: Out of memory\n");
-      return (size_t)-1;
+      return (uint32_t)-1;
    }
 
-   for (size_t i=0; i<nbuffers; i++) {
+   for (uint32_t i=0; i<nbuffers; i++) {
       memcpy (&txbuf[txbuf_idx], buffers[i], buffer_lengths[i]);
       txbuf_idx += buffer_lengths[i];
    }
@@ -303,55 +310,55 @@ size_t netcode_udp_senda (int fd, const char *remote_host, uint16_t port,
    return nbytes;
 }
 
-size_t netcode_udp_send (int fd, const char *remote_host, uint16_t port,
-                         void *buf1, size_t buflen1,
+uint32_t netcode_udp_send (socket_t fd, const char *remote_host, uint16_t port,
+                         void *buf1, uint32_t buflen1,
                          ...)
 {
    va_list ap;
    va_start (ap, buflen1);
-   size_t nbytes = netcode_udp_sendv (fd, remote_host, port, buf1, buflen1, ap);
+   uint32_t nbytes = netcode_udp_sendv (fd, remote_host, port, buf1, buflen1, ap);
    va_end (ap);
    return nbytes;
 }
 
-size_t netcode_udp_sendv (int fd, const char *remote_host, uint16_t port,
-                          void *buf1, size_t buflen1,
+uint32_t netcode_udp_sendv (socket_t fd, const char *remote_host, uint16_t port,
+                          void *buf1, uint32_t buflen1,
                           va_list ap)
 {
-   size_t nbytes = 0;
+   uint32_t nbytes = 0;
    void **txbuffers = NULL;
-   size_t *txbuffer_lengths = NULL;
-   size_t nbuffers = 0;
+   uint32_t *txbuffer_lengths = NULL;
+   uint32_t nbuffers = 0;
    va_list vc;
    void *tmp = buf1;
-   size_t tmplen = 0;
+   uint32_t tmplen = 0;
 
    va_copy (vc, ap);
-   for (size_t i=0; tmp; i++) {
+   for (uint32_t i=0; tmp; i++) {
       nbuffers++;
       tmp = va_arg (vc, void *);
-      tmplen = va_arg (vc, size_t);
+      tmplen = va_arg (vc, uint32_t);
    }
    (void)tmplen;
    va_end (vc);
 
    if (!(txbuffers = calloc (nbuffers + 1, sizeof *txbuffers))) {
       NETCODE_UTIL_LOG ("Error: Out of memory\n");
-      return (size_t)-1;
+      return (uint32_t)-1;
    }
 
    if (!(txbuffer_lengths = calloc (nbuffers + 1, sizeof *txbuffer_lengths))) {
       free (txbuffers);
       NETCODE_UTIL_LOG ("Error: Out of memory\n");
-      return (size_t)-1;
+      return (uint32_t)-1;
    }
 
    va_copy (vc, ap);
-   for (size_t i=0; buf1; i++) {
+   for (uint32_t i=0; buf1; i++) {
       txbuffers[i] = buf1;
       txbuffer_lengths[i] = buflen1;
       buf1 = va_arg (vc, void *);
-      buflen1 = va_arg (vc, size_t);
+      buflen1 = va_arg (vc, uint32_t);
    }
    va_end (vc);
 

@@ -11,16 +11,16 @@
 static int tcp_test (void)
 {
    int ret = EXIT_FAILURE;
-   int fd = -1;
-   size_t rxlen = 8192;
+   socket_t fd = -1;
+   uint32_t rxlen = 8192;
    char *rx = malloc (rxlen);
    char *expected = NETCODE_TEST_TCP_RESPONSE;
-   size_t expected_len = strlen (NETCODE_TEST_TCP_RESPONSE);
+   uint32_t expected_len = (uint32_t)strlen (NETCODE_TEST_TCP_RESPONSE);
 
    printf ("CLIENT-TCP: Netcode client test.\n");
 
    if (!rx) {
-      NETCODE_UTIL_LOG ("Failed to allocate %zu bytes for response\n",
+      NETCODE_UTIL_LOG ("Failed to allocate %u bytes for response\n",
                         rxlen);
    }
    memset (rx, 0, rxlen);
@@ -32,34 +32,35 @@ static int tcp_test (void)
    printf ("CLIENT-TCP: Connecting to [%s:%u] ... ", NETCODE_TEST_SERVER, NETCODE_TEST_TCP_PORT);
 
    // if ((fd = netcode_tcp_connect ("example.noname", NETCODE_TEST_TCP_PORT))==-1) {
-   if ((fd = netcode_tcp_connect (NETCODE_TEST_SERVER, NETCODE_TEST_TCP_PORT))==-1) {
+   fd = netcode_tcp_connect (NETCODE_TEST_SERVER, NETCODE_TEST_TCP_PORT);
+   if (!(VALID_SOCKET(fd))) {
       NETCODE_UTIL_LOG ("Failed to connect: [%i:%s].\n",
                          netcode_util_errno (),
                          netcode_util_strerror (netcode_util_errno ()));
       goto errorexit;
    }
 
-   printf ("CLIENT-TCP:  connected [%i]\n", fd);
+   printf ("CLIENT-TCP:  connected [%llu]\n", fd);
 
    const char *tx = NETCODE_TEST_TCP_REQUEST;
-   size_t txlen = strlen (tx);
-   size_t nbytes = 0;
+   uint32_t txlen = (uint32_t)strlen (tx);
+   uint32_t nbytes = 0;
 
    if ((nbytes = netcode_tcp_write (fd, tx, txlen))!=txlen) {
-      NETCODE_UTIL_LOG ("Failed to transmit %zu bytes [%s], transmitted %zu instead.\n",
+      NETCODE_UTIL_LOG ("Failed to transmit %u bytes [%s], transmitted %u instead.\n",
                          rxlen, tx, nbytes);
       goto errorexit;
    }
 
-   printf ("CLIENT-TCP: Transmitted %zu bytes [%s] ...\n", txlen, tx);
+   printf ("CLIENT-TCP: Transmitted %u bytes [%s] ...\n", txlen, tx);
 
    if ((nbytes = netcode_tcp_read (fd, rx, rxlen, TIMEOUT))!=expected_len) {
-      NETCODE_UTIL_LOG ("Failed to receive %zu bytes, got %zu instead.\n",
+      NETCODE_UTIL_LOG ("Failed to receive %u bytes, got %u instead.\n",
                          expected_len, nbytes);
       goto errorexit;
    }
 
-   printf ("CLIENT-TCP: Received %zu bytes [%s].\n", nbytes, rx);
+   printf ("CLIENT-TCP: Received %u bytes [%s].\n", nbytes, rx);
 
    if ((strcmp (rx, NETCODE_TEST_TCP_RESPONSE))!=0) {
       NETCODE_UTIL_LOG ("Unexpected response: expected [%s], got [%s] instead.\n",
@@ -70,7 +71,7 @@ static int tcp_test (void)
 
 errorexit:
    free (rx);
-   if (fd >= 0) {
+   if (VALID_SOCKET(fd)) {
       netcode_util_close (fd);
    }
    return ret;
@@ -83,13 +84,14 @@ int udp_test (void)
    char *remote_ip = NULL;
    uint16_t remote_port = 0;
    char *tmp = NULL;
-   size_t rxlen = 0;
-   size_t rc = 0;
-   int udp_socket = -1;
+   uint32_t rxlen = 0;
+   uint32_t rc = 0;
+   socket_t udp_socket = -1;
 
    printf ("CLIENT-UDP: Setting up datagram socket ... ");
 
-   if ((udp_socket = netcode_udp_socket (NETCODE_TEST_UDP_CLIENT_PORT, NULL)) < 0) {
+   udp_socket = netcode_udp_socket (NETCODE_TEST_UDP_CLIENT_PORT, NULL);
+   if (!(VALID_SOCKET(udp_socket))) {
       NETCODE_UTIL_LOG ("CLIENT-UDP: Failed to initialise socket, error %i [%s.\n",
                         netcode_util_errno (),
                         netcode_util_strerror (netcode_util_errno ()));
@@ -100,9 +102,9 @@ int udp_test (void)
 
    rc = netcode_udp_send (udp_socket, NETCODE_TEST_SERVER, NETCODE_TEST_UDP_SERVER_PORT,
                           (uint8_t *)NETCODE_TEST_UDP_REQUEST1,
-                          strlen (NETCODE_TEST_UDP_REQUEST1) + 1,
+                          (uint32_t)strlen (NETCODE_TEST_UDP_REQUEST1) + 1,
                           (uint8_t *)NETCODE_TEST_UDP_REQUEST2,
-                          strlen (NETCODE_TEST_UDP_REQUEST2) + 1,
+                          (uint32_t)strlen (NETCODE_TEST_UDP_REQUEST2) + 1,
                           NULL);
 
    if (rc != (strlen (NETCODE_TEST_UDP_REQUEST1) + 1 + strlen (NETCODE_TEST_UDP_REQUEST2) + 1)) {
@@ -121,7 +123,7 @@ int udp_test (void)
 
    printf ("done\n");
 
-   if (rc == (size_t)-1) {
+   if (rc == (uint32_t)-1) {
       NETCODE_UTIL_LOG ("CLIENT-UDP: Error %i waiting for datagram: %s\n",
                         netcode_util_errno (),
                         netcode_util_strerror (netcode_util_errno ()));
@@ -133,7 +135,7 @@ int udp_test (void)
       goto errorexit;
    }
 
-   printf ("CLIENT-UDP: Received %zu/%zu bytes from [%s:%u]\n",
+   printf ("CLIENT-UDP: Received %u/%u bytes from [%s:%u]\n",
            rc, rxlen, remote_ip, remote_port);
 
    uint8_t *part2 = &rxdata[strlen (NETCODE_TEST_UDP_RESPONSE1) + 1];
