@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "netcode_util.h"
 #include "netcode_tcp.h"
@@ -33,21 +34,22 @@ static int tcp_test (void)
 
    // if ((fd = netcode_tcp_connect ("example.noname", NETCODE_TEST_TCP_PORT))==-1) {
    fd = netcode_tcp_connect (NETCODE_TEST_SERVER, NETCODE_TEST_TCP_PORT);
-   if (!(VALID_SOCKET(fd))) {
+   if (!(NETCODE_SOCK_VALID(fd))) {
       NETCODE_UTIL_LOG ("Failed to connect: [%i:%s].\n",
                          netcode_util_errno (),
                          netcode_util_strerror (netcode_util_errno ()));
       goto errorexit;
    }
 
-   printf ("CLIENT-TCP:  connected [%llu]\n", fd);
+   printf ("CLIENT-TCP:  connected [%" PRIi64 "]\n", (int64_t)fd);
 
    const char *tx = NETCODE_TEST_TCP_REQUEST;
    uint32_t txlen = (uint32_t)strlen (tx);
-   uint32_t nbytes = 0;
+   int64_t nbytes = 0;
 
    if ((nbytes = netcode_tcp_write (fd, tx, txlen))!=txlen) {
-      NETCODE_UTIL_LOG ("Failed to transmit %u bytes [%s], transmitted %u instead.\n",
+      NETCODE_UTIL_LOG ("Failed to transmit %u bytes [%s], "
+                        "transmitted %" PRIi64 " instead.\n",
                          rxlen, tx, nbytes);
       goto errorexit;
    }
@@ -55,12 +57,12 @@ static int tcp_test (void)
    printf ("CLIENT-TCP: Transmitted %u bytes [%s] ...\n", txlen, tx);
 
    if ((nbytes = netcode_tcp_read (fd, rx, rxlen, TIMEOUT))!=expected_len) {
-      NETCODE_UTIL_LOG ("Failed to receive %u bytes, got %u instead.\n",
+      NETCODE_UTIL_LOG ("Failed to receive %u bytes, got %" PRIi64 " instead.\n",
                          expected_len, nbytes);
       goto errorexit;
    }
 
-   printf ("CLIENT-TCP: Received %u bytes [%s].\n", nbytes, rx);
+   printf ("CLIENT-TCP: Received %" PRIi64 " bytes [%s].\n", nbytes, rx);
 
    if ((strcmp (rx, NETCODE_TEST_TCP_RESPONSE))!=0) {
       NETCODE_UTIL_LOG ("Unexpected response: expected [%s], got [%s] instead.\n",
@@ -71,7 +73,7 @@ static int tcp_test (void)
 
 errorexit:
    free (rx);
-   if (VALID_SOCKET(fd)) {
+   if (NETCODE_SOCK_VALID(fd)) {
       netcode_util_close (fd);
    }
    return ret;
@@ -85,13 +87,13 @@ int udp_test (void)
    uint16_t remote_port = 0;
    char *tmp = NULL;
    uint32_t rxlen = 0;
-   uint32_t rc = 0;
+   int64_t rc = 0;
    socket_t udp_socket = -1;
 
    printf ("CLIENT-UDP: Setting up datagram socket ... ");
 
    udp_socket = netcode_udp_socket (NETCODE_TEST_UDP_CLIENT_PORT, NULL);
-   if (!(VALID_SOCKET(udp_socket))) {
+   if (!(NETCODE_SOCK_VALID(udp_socket))) {
       NETCODE_UTIL_LOG ("CLIENT-UDP: Failed to initialise socket, error %i [%s.\n",
                         netcode_util_errno (),
                         netcode_util_strerror (netcode_util_errno ()));
@@ -123,7 +125,7 @@ int udp_test (void)
 
    printf ("done\n");
 
-   if (rc == (uint32_t)-1) {
+   if (rc == -1) {
       NETCODE_UTIL_LOG ("CLIENT-UDP: Error %i waiting for datagram: %s\n",
                         netcode_util_errno (),
                         netcode_util_strerror (netcode_util_errno ()));
@@ -135,7 +137,7 @@ int udp_test (void)
       goto errorexit;
    }
 
-   printf ("CLIENT-UDP: Received %u/%u bytes from [%s:%u]\n",
+   printf ("CLIENT-UDP: Received %" PRIi64 "/%u bytes from [%s:%u]\n",
            rc, rxlen, remote_ip, remote_port);
 
    uint8_t *part2 = &rxdata[strlen (NETCODE_TEST_UDP_RESPONSE1) + 1];

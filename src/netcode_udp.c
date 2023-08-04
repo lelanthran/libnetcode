@@ -121,9 +121,9 @@ socket_t netcode_udp_socket (uint16_t listen_port, const char *default_host)
 }
 
 
-uint32_t netcode_udp_wait (socket_t fd, char **remote_host, uint16_t *remote_port,
-                         uint8_t **buf, uint32_t *buflen,
-                         uint32_t timeout)
+int64_t netcode_udp_wait (socket_t fd, char **remote_host, uint16_t *remote_port,
+                          uint8_t **buf, uint32_t *buflen,
+                          uint32_t timeout)
 {
    bool error = true;
    uint32_t retval = (uint32_t)-1;
@@ -164,13 +164,14 @@ uint32_t netcode_udp_wait (socket_t fd, char **remote_host, uint16_t *remote_por
       int r = recvfrom (fd, tmp, max_size, MSG_DONTWAIT | MSG_PEEK,
                             (struct sockaddr *)&addr_remote, (int *)&addr_remote_len);
 #else
-      ssize_t r = recvfrom (fd, NULL, 0, MSG_DONTWAIT | MSG_PEEK | MSG_TRUNC,
-                            (struct sockaddr *)&addr_remote, &addr_remote_len);
+      int64_t  r = recvfrom (fd, NULL, 0, MSG_DONTWAIT | MSG_PEEK | MSG_TRUNC,
+                                 (struct sockaddr *)&addr_remote, &addr_remote_len);
 #endif
 
       // An error occurred, return errorcode
       if (r < 0 ) {
-         NETCODE_UTIL_LOG ("First possible error: %i, %i\n", errno, r);
+         NETCODE_UTIL_LOG ("First possible error: %i, %" PRIi64 "\n",
+                  errno, r);
          goto errorexit;
       }
 
@@ -192,7 +193,7 @@ uint32_t netcode_udp_wait (socket_t fd, char **remote_host, uint16_t *remote_por
       }
 
       // Valid length in r. Reallocate the dst buffer and try again.
-      *buflen = r;
+      *buflen = (uint32_t)r;
       if (!(*buf = malloc (*buflen))) {
          goto errorexit;
       }
@@ -238,8 +239,9 @@ errorexit:
    return retval;
 }
 
-static uint32_t netcode_udp_send_single (socket_t fd, const char *remote_host, uint16_t port,
-                                       void *buf, uint32_t buflen)
+static int64_t netcode_udp_send_single (socket_t fd,
+                                        const char *remote_host, uint16_t port,
+                                        void *buf, uint32_t buflen)
 {
    ssize_t txed = 0;
    int flags = 0;
@@ -283,14 +285,14 @@ static uint32_t netcode_udp_send_single (socket_t fd, const char *remote_host, u
    return (uint32_t)txed;
 }
 
-uint32_t netcode_udp_senda (socket_t fd, const char *remote_host, uint16_t port,
-                          uint32_t nbuffers,
-                          void **buffers, uint32_t *buffer_lengths)
+int64_t netcode_udp_senda (socket_t fd, const char *remote_host, uint16_t port,
+                           uint32_t nbuffers,
+                           void **buffers, uint32_t *buffer_lengths)
 {
    uint8_t *txbuf = NULL;
    uint32_t txbuf_len = 0;
    uint32_t txbuf_idx = 0;
-   uint32_t nbytes = 0;
+   int64_t nbytes = 0;
 
    for (uint32_t i=0; i<nbuffers; i++) {
       txbuf_len += buffer_lengths[i];
@@ -310,22 +312,22 @@ uint32_t netcode_udp_senda (socket_t fd, const char *remote_host, uint16_t port,
    return nbytes;
 }
 
-uint32_t netcode_udp_send (socket_t fd, const char *remote_host, uint16_t port,
-                         void *buf1, uint32_t buflen1,
-                         ...)
+int64_t netcode_udp_send (socket_t fd, const char *remote_host, uint16_t port,
+                          void *buf1, uint32_t buflen1,
+                          ...)
 {
    va_list ap;
    va_start (ap, buflen1);
-   uint32_t nbytes = netcode_udp_sendv (fd, remote_host, port, buf1, buflen1, ap);
+   int64_t nbytes = netcode_udp_sendv (fd, remote_host, port, buf1, buflen1, ap);
    va_end (ap);
    return nbytes;
 }
 
-uint32_t netcode_udp_sendv (socket_t fd, const char *remote_host, uint16_t port,
-                          void *buf1, uint32_t buflen1,
-                          va_list ap)
+int64_t netcode_udp_sendv (socket_t fd, const char *remote_host, uint16_t port,
+                           void *buf1, uint32_t buflen1,
+                           va_list ap)
 {
-   uint32_t nbytes = 0;
+   int64_t nbytes = 0;
    void **txbuffers = NULL;
    uint32_t *txbuffer_lengths = NULL;
    uint32_t nbuffers = 0;

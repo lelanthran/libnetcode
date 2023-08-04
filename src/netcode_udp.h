@@ -21,12 +21,17 @@ extern "C" {
    // a host is provided.
    //
    // On sending, a different host may be specified.
-   // On error will return -1 and the error and error message can be
-   // retrieved using the _errno() and _strerror() functions.
+   //
+   // The caller must check if the returned socket is valid using the
+   // macro NETCODE_SOCK_VALID(fd) which evaluates to true if the socket
+   // is valid and false otherwise.
+   //
+   // On error the error value and message can be retrieved using the
+   // _errno() and _strerror() functions.
    socket_t netcode_udp_socket (uint16_t listen_port, const char *default_host);
 
    // Will wait not less than 'timeout' seconds for a datagram
-   // on the port that the socket fd is connected on. When a datagram
+   // on the port that the socket is connected on. When a datagram
    // is received the peer's IP address will be copied into the
    // parameter 'remote_host' if 'remote_host' is not NULL. The
    // caller must free 'remote_host'.
@@ -42,7 +47,7 @@ extern "C" {
    // The size of the datagram will be copied into 'buflen' and
    // will also be returned.
    //
-   // On error (uint32_t)-1 will be returned. On timeout zero will be
+   // On error -1 will be returned. On timeout zero will be
    // returned and '*buflen ' will be set to zero, '*remote_host'
    // will be set to NULL and the '*buf' will be set to NULL.
    //
@@ -57,9 +62,9 @@ extern "C" {
    // the remote host's ip address will be copied into '*remote_host'
    // which the caller must free.
    //
-   uint32_t netcode_udp_wait (socket_t fd, char **remote_host, uint16_t *remote_port,
-                              uint8_t **buf, uint32_t *buflen,
-                              uint32_t timeout);
+   int64_t netcode_udp_wait (socket_t fd, char **remote_host, uint16_t *remote_port,
+                             uint8_t **buf, uint32_t *buflen,
+                             uint32_t timeout);
 
    // Will send the data in the buffers specified on the datagram socket
    // 'fd'. If the parameter 'remote_host' is not NULL, then the datagram
@@ -73,7 +78,7 @@ extern "C" {
    // specified in the netcode_udp_socket() call that was used to create
    // the 'fd'.
    //
-   // RETURNS: (uint32_t)-1 on error, the number of bytes transmitted on success.
+   // RETURNS: -1 on error, the number of bytes transmitted on success.
    // The variants differ only in how the buffers are specified:
    //    senda() takes an array of buffer pointers and an array
    //       of buffer lengths. buf_array[i] will have buf_length[i].
@@ -82,17 +87,17 @@ extern "C" {
    //    sendv() takes { buffer, buffer_length } parameters, repeated
    //       for each buffer, terminated with a NULL pointer, using the
    //       va_list pointer instead of literal parameters.
-   uint32_t netcode_udp_senda (socket_t fd, const char *remote_host, uint16_t port,
-                               uint32_t nbuffers,
-                               void **buffers, uint32_t *buffer_lengths);
+   int64_t netcode_udp_senda (socket_t fd, const char *remote_host, uint16_t port,
+                              uint32_t nbuffers,
+                              void **buffers, uint32_t *buffer_lengths);
 
-   uint32_t netcode_udp_send (socket_t fd, const char *remote_host, uint16_t port,
+   int64_t netcode_udp_send (socket_t fd, const char *remote_host, uint16_t port,
+                             void *buf1, uint32_t buflen1,
+                             ...);
+
+   int64_t netcode_udp_sendv (socket_t fd, const char *remote_host, uint16_t port,
                               void *buf1, uint32_t buflen1,
-                              ...);
-
-   uint32_t netcode_udp_sendv (socket_t fd, const char *remote_host, uint16_t port,
-                               void *buf1, uint32_t buflen1,
-                               va_list ap);
+                              va_list ap);
 
 #ifdef __cplusplus
 };

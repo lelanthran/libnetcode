@@ -39,10 +39,10 @@
 
 
 #ifdef PLATFORM_Windows
-#  define VALID_SOCKET(x) (x!=INVALID_SOCKET)
+#  define NETCODE_SOCK_VALID(x) (x!=INVALID_SOCKET)
 #else
-#  define INVALID_SOCKET  -1
-#  define VALID_SOCKET(x) (x >= 0)
+#  define NETCODE_INVALID_SOCKET  -1
+#  define NETCODE_SOCK_VALID(x) (x >= 0)
 #endif
 
 

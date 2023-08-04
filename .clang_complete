@@ -1,3 +1,7 @@
+-W -Wall -Wextra
+-Wdouble-promotion
+-Wconversion
+-Wno-sign-conversion
 -I.
 -I./include
 -Dnetcode='"1.0.0"'

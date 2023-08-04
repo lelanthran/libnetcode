@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #include "netcode_util.h"
 #include "netcode_tcp.h"
@@ -19,7 +20,7 @@ static int tcp_test (void)
    uint32_t expected_len = (uint32_t)strlen (NETCODE_TEST_TCP_REQUEST);
    char *client_ip = NULL;
    uint16_t client_port;
-   uint32_t nbytes = 0;
+   int64_t nbytes = 0;
 
    printf ("SERVER-TCP: Netcode server test.\n");
 
@@ -35,18 +36,18 @@ static int tcp_test (void)
    printf ("SERVER-TCP: Listening on [%u] ... ", NETCODE_TEST_TCP_PORT);
 
    listenfd = netcode_tcp_server (NETCODE_TEST_TCP_PORT);
-   if (!(VALID_SOCKET(listenfd))) {
+   if (!(NETCODE_SOCK_VALID(listenfd))) {
       NETCODE_UTIL_LOG ("Failed to listen: [%i:%s].\n",
                          netcode_util_errno (),
                          netcode_util_strerror (netcode_util_errno ()));
       goto errorexit;
    }
 
-   printf ("SERVER-TCP:  listening on fd [%llu]\n", listenfd);
+   printf ("SERVER-TCP:  listening on fd [%i]\n",(int)listenfd);
 
    printf ("SERVER-TCP: Waiting for connection (max %i seconds) ... ", TIMEOUT);
    clientfd = netcode_tcp_accept (listenfd, TIMEOUT, &client_ip, &client_port);
-   if (!(VALID_SOCKET(clientfd))) {
+   if (!(NETCODE_SOCK_VALID(clientfd))) {
       NETCODE_UTIL_LOG ("Timed out waiting for client to connect: [%i%s].\n",
                          netcode_util_errno (),
                          netcode_util_strerror (netcode_util_errno ()));
@@ -63,12 +64,12 @@ static int tcp_test (void)
    printf ("SERVER-TCP: Waiting for incoming data (max %i seconds) ... ", TIMEOUT);
 
    if ((nbytes = netcode_tcp_read (clientfd, rx, rxlen, TIMEOUT))!=expected_len) {
-      NETCODE_UTIL_LOG ("Failed to receive %u bytes, got %u instead.\n",
+      NETCODE_UTIL_LOG ("Failed to receive %u bytes, got %" PRIi64 " instead.\n",
                          expected_len, nbytes);
       goto errorexit;
    }
 
-   printf ("SERVER-TCP: received %u bytes [%s].\n", nbytes, rx);
+   printf ("SERVER-TCP: received %" PRIi64 " bytes [%s].\n", nbytes, rx);
 
    if ((strcmp (rx, NETCODE_TEST_TCP_REQUEST))!=0) {
       NETCODE_UTIL_LOG ("Unexpected request: expected [%s], got [%s] instead.\n",
@@ -79,7 +80,8 @@ static int tcp_test (void)
    uint32_t txlen = (uint32_t)strlen (tx);
 
    if ((nbytes = netcode_tcp_write (clientfd, tx, txlen))!=txlen) {
-      NETCODE_UTIL_LOG ("Failed to transmit %u bytes [%s], transmitted %u instead.\n",
+      NETCODE_UTIL_LOG ("Failed to transmit %u bytes [%s], "
+                        "transmitted %" PRIi64 " instead.\n",
                          rxlen, tx, nbytes);
       goto errorexit;
    }
@@ -95,10 +97,10 @@ errorexit:
    free (rx);
    free (client_ip);
 
-   if ((VALID_SOCKET (listenfd))) {
+   if ((NETCODE_SOCK_VALID (listenfd))) {
       netcode_util_close (listenfd);
    }
-   if ((VALID_SOCKET (clientfd))) {
+   if ((NETCODE_SOCK_VALID (clientfd))) {
       netcode_util_close (clientfd);
    }
    return ret;
@@ -112,13 +114,13 @@ int udp_test (void)
    uint16_t remote_port = 0;
    char *tmp = NULL;
    uint32_t rxlen = 0;
-   uint32_t rc = 0;
+   int64_t rc = 0;
    socket_t udp_socket = -1;
 
    printf ("SERVER-UDP: Setting up datagram socket ... ");
 
    udp_socket = netcode_udp_socket (NETCODE_TEST_UDP_SERVER_PORT, NULL);
-   if (!(VALID_SOCKET(udp_socket))) {
+   if (!(NETCODE_SOCK_VALID(udp_socket))) {
       NETCODE_UTIL_LOG ("SERVER-UDP: Failed to initialise socket, error %i [%s.\n",
                         netcode_util_errno (),
                         netcode_util_strerror (netcode_util_errno ()));
@@ -144,7 +146,7 @@ int udp_test (void)
       goto errorexit;
    }
 
-   printf ("SERVER-UDP: Received %u/%u bytes from [%s]\n",
+   printf ("SERVER-UDP: Received %" PRIi64 "/%u bytes from [%s]\n",
            rc, rxlen, remote_ip);
 
 
@@ -174,8 +176,11 @@ int udp_test (void)
                           NULL);
    int errcode = netcode_util_errno ();
    const char *errmsg = netcode_util_strerror (errcode);
-   if (rc != (strlen (NETCODE_TEST_UDP_RESPONSE1) + 1 + strlen (NETCODE_TEST_UDP_RESPONSE2) + 1)) {
-      NETCODE_UTIL_LOG ("SERVER-UDP: Failed to transmit to [%s], udp_send() returned %u\n"
+   if (rc != (strlen (NETCODE_TEST_UDP_RESPONSE1) +
+               1 +
+               strlen (NETCODE_TEST_UDP_RESPONSE2) + 1)) {
+      NETCODE_UTIL_LOG ("SERVER-UDP: Failed to transmit to [%s], "
+                        "udp_send() returned %" PRIi64 "\n"
                         "[%i:%s]\n",
                         remote_ip,
                         rc,
