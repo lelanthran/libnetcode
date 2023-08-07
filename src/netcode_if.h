@@ -37,6 +37,7 @@ extern "C" {
    bool netcode_if_extract (const netcode_if_t *iface,
                             uint64_t   *dst_if_flags,
                             char      **dst_if_name,
+                            char      **dst_if_descr,
                             char      **dst_if_addr,
                             char      **dst_if_netmask,
                             char      **dst_if_broadcast,

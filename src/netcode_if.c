@@ -23,6 +23,7 @@ static char *lstrdup (const char *src)
 struct netcode_if_t {
    uint64_t   if_flags;
    char      *if_name;
+   char      *if_descr;
    char      *if_addr;
    char      *if_netmask;
    char      *if_broadcast;
@@ -35,6 +36,7 @@ static void netcode_if_del (netcode_if_t *iface)
       return;
 
    free (iface->if_name);
+   free (iface->if_descr);
    free (iface->if_addr);
    free (iface->if_netmask);
    free (iface->if_broadcast);
@@ -45,6 +47,7 @@ static void netcode_if_del (netcode_if_t *iface)
 
 static netcode_if_t *netcode_if_new (uint64_t if_flags,
                                      const char *if_name,
+                                     const char *if_descr,
                                      const char *if_addr,
                                      const char *if_netmask,
                                      const char *if_broadcast,
@@ -56,12 +59,14 @@ static netcode_if_t *netcode_if_new (uint64_t if_flags,
 
    ret->if_flags     = if_flags;
    ret->if_name      = lstrdup (if_name);
+   ret->if_descr     = lstrdup (if_descr);
    ret->if_addr      = lstrdup (if_addr);
    ret->if_netmask   = lstrdup (if_netmask);
    ret->if_broadcast = lstrdup (if_broadcast);
    ret->if_p2paddr   = lstrdup (if_p2paddr);
 
    if (!ret->if_name      ||
+       !ret->if_descr     ||
        !ret->if_addr      ||
        !ret->if_netmask   ||
        !ret->if_broadcast ||
@@ -238,6 +243,7 @@ netcode_if_t **netcode_if_list_new (void)
    size_t nitems = 0;
    uint64_t if_flags = 0;
    char *if_name = NULL,
+        *if_descr = NULL,
         *if_addr = NULL,
         *if_netmask = NULL,
         *if_broadcast = NULL,
@@ -297,22 +303,42 @@ netcode_if_t **netcode_if_list_new (void)
 
          USHORT af = ip->Address.lpSockaddr->sa_family;
 
-         size_t dstlen = (wcslen (tmp->FriendlyName) * 6) + 1;
-         char *dst = malloc (dstlen);
-         if (!dst) {
-            // TODO: Handle error
-            goto errorexit;
+         size_t fname_len = wcstombs (NULL, tmp->FriendlyName, 0) + 1;
+         size_t descr_len = wcstombs (NULL, tmp->Description, 0) + 1;
+         size_t aname_len = strlen (tmp->AdapterName) + 1;
+
+         free (if_name);      if_name = NULL;
+         free (if_descr);     if_descr = NULL;
+         free (if_addr);      if_addr = NULL;
+         free (if_netmask);   if_netmask = NULL;
+         free (if_broadcast); if_broadcast = NULL;
+         free (if_p2paddr);   if_p2paddr = NULL;
+
+         if_name = malloc (aname_len + 1);
+         if (!if_name) {
+             // TODO: Handle error
+             goto errorexit;
          }
-         wcstombs (dst, tmp->FriendlyName, dstlen);
+        strcpy (if_name, tmp->AdapterName);
+
+         if_descr = malloc (fname_len + descr_len + 10);
+         if (!if_descr) {
+             // TODO: Handle error
+             goto errorexit;
+         }
+         wcstombs (if_descr, tmp->FriendlyName, fname_len);
+         strcat (if_descr, " (");
+         wcstombs (&if_descr[fname_len + 1], tmp->Description, descr_len);
+         strcat (if_descr, ")");
 
          if_flags = 0;
-         if_name = lstrdup (dst); free (dst); dst = NULL;
          if_addr = netcode_util_sockaddr_to_str (ip->Address.lpSockaddr);
          if_netmask = nmprefix_to_string (ip->OnLinkPrefixLength, af);
-         if_broadcast = "";
-         if_p2paddr = "";
+         if_broadcast = lstrdup ("");
+         if_p2paddr = lstrdup ("");
 
          ret[idx] = netcode_if_new (if_flags, if_name,
+                                              if_descr,
                                               if_addr,
                                               if_netmask,
                                               if_broadcast,
@@ -330,6 +356,13 @@ netcode_if_t **netcode_if_list_new (void)
    error = false;
 
 errorexit:
+
+   free (if_name);      if_name = NULL;
+   free (if_descr);     if_descr = NULL;
+   free (if_addr);      if_addr = NULL;
+   free (if_netmask);   if_netmask = NULL;
+   free (if_broadcast); if_broadcast = NULL;
+   free (if_p2paddr);   if_p2paddr = NULL;
 
    free (addresses);
    if (error) {
@@ -488,6 +521,7 @@ void netcode_if_list_del (netcode_if_t **list)
 bool netcode_if_extract (const netcode_if_t *iface,
                          uint64_t   *dst_if_flags,
                          char      **dst_if_name,
+                         char      **dst_if_descr,
                          char      **dst_if_addr,
                          char      **dst_if_netmask,
                          char      **dst_if_broadcast,
@@ -511,6 +545,7 @@ bool netcode_if_extract (const netcode_if_t *iface,
 } while (0)
 
    CONDITIONAL_STRCPY (dst_if_name,       iface->if_name);
+   CONDITIONAL_STRCPY (dst_if_descr,      iface->if_descr);
    CONDITIONAL_STRCPY (dst_if_addr,       iface->if_addr);
    CONDITIONAL_STRCPY (dst_if_netmask,    iface->if_netmask);
    CONDITIONAL_STRCPY (dst_if_broadcast,  iface->if_broadcast);

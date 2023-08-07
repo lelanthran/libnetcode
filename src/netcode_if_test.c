@@ -12,6 +12,7 @@ static int if_test (void)
 
    uint64_t if_flags = 0;
    char *if_name = NULL,
+        *if_descr = NULL,
         *if_addr = NULL,
         *if_netmask = NULL,
         *if_broadcast = NULL,
@@ -36,6 +37,7 @@ static int if_test (void)
       if_flags = 0;
 
       free (if_name);      if_name      = NULL;
+      free (if_descr);     if_descr      = NULL;
       free (if_addr);      if_addr      = NULL;
       free (if_netmask);   if_netmask   = NULL;
       free (if_broadcast); if_broadcast = NULL;
@@ -45,6 +47,7 @@ static int if_test (void)
       bool rc = netcode_if_extract (iface,
                                     &if_flags,
                                     &if_name,
+                                    &if_descr,
                                     &if_addr,
                                     &if_netmask,
                                     &if_broadcast,
@@ -54,6 +57,7 @@ static int if_test (void)
       }
       NETCODE_UTIL_LOG ("Information for iface [%zu]\n", i);
       NETCODE_UTIL_LOG ("     iface     [%s:0x%08" PRIx64 "]\n", if_name, if_flags);
+      NETCODE_UTIL_LOG ("     descr     [%s]\n", if_descr);
       NETCODE_UTIL_LOG ("     addr      [%s]\n", if_addr);
       NETCODE_UTIL_LOG ("     netmask   [%s]\n", if_netmask);
       NETCODE_UTIL_LOG ("     broadcast [%s]\n", if_broadcast);
@@ -65,6 +69,7 @@ static int if_test (void)
 errorexit:
 
    free (if_name);
+   free (if_descr);
    free (if_addr);
    free (if_netmask);
    free (if_broadcast);
