@@ -481,7 +481,7 @@ netcode_if_t **netcode_if_list_new (void)
       ifr->if_p2paddr   = lstrdup (if_p2paddr);
 #endif
 
-      if (!(ret[idx++] = netcode_if_new (lflags, lname, laddr, lnetmask, lbroadcast, lp2p))) {
+      if (!(ret[idx++] = netcode_if_new (lflags, lname, "", laddr, lnetmask, lbroadcast, lp2p))) {
          // TODO: Record the error here
          goto errorexit;
       }
