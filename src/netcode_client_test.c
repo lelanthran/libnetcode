@@ -56,7 +56,7 @@ static int tcp_test (void)
 
    printf ("CLIENT-TCP: Transmitted %u bytes [%s] ...\n", txlen, tx);
 
-   if ((nbytes = netcode_tcp_read (fd, rx, rxlen, TIMEOUT))!=expected_len) {
+   if ((nbytes = netcode_tcp_read (fd, rx, expected_len, TIMEOUT))!=expected_len) {
       NETCODE_UTIL_LOG ("Failed to receive %u bytes, got %" PRIi64 " instead.\n",
                          expected_len, nbytes);
       goto errorexit;

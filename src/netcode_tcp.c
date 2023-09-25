@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <time.h>
+#include <errno.h>
 
 #include "netcode_util.h"
 #include "netcode_tcp.h"
@@ -103,6 +105,11 @@ socket_t netcode_tcp_server (uint16_t port)
    if (!(NETCODE_SOCK_VALID(fd))) {
       // NETCODE_UTIL_LOG ("socket() failed\n");
       return -1;
+   }
+
+   int optval = 1;
+   if ((setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval)) !=0) {
+      // Warn??? This is not really required anyway
    }
 
    if (bind (fd, (struct sockaddr *)&addr, sizeof addr)!=0) {
@@ -215,66 +222,27 @@ int64_t netcode_tcp_read (socket_t fd, void *buf, uint32_t len,
                           uint32_t timeout)
 {
    uint32_t idx = 0;
-   struct timeval tv = { timeout , 0 };
    unsigned char *buffer = buf;
-   int countdown = 2;
-   int error_code = 0;
-   socklen_t error_code_len = sizeof error_code;
-
-#ifdef PLATFORM_Windows
-   getsockopt (fd, SOL_SOCKET, SO_ERROR, (char *)&error_code, (int *)&error_code_len);
-#else
-   getsockopt (fd, SOL_SOCKET, SO_ERROR, &error_code, &error_code_len);
-#endif
-   if (error_code!=0) return -1;
+   time_t now = time (NULL);
+   time_t expiry = time (NULL) + timeout;
    SAFETY_CHECK;
    // NETCODE_UTIL_LOG ("Attempting to read %zu bytes\n", len);
    do {
-      fd_set fds;
-      FD_ZERO (&fds);
-      FD_SET (fd, &fds);
-      int selresult = select ((int)fd + 1, &fds, NULL, NULL, &tv);
-      if (selresult>0) {
-         netcode_util_clear_errno ();
+      errno = 0;
 #ifdef PLATFORM_Windows
-         int32_t r = recv (fd, (char *)&buffer[idx], len-idx, MSG_DONTWAIT);
+      int32_t r = recv (fd, (char *)&buffer[idx], len-idx, MSG_DONTWAIT);
 #else
-         int64_t r = recv (fd, &buffer[idx], len-idx, MSG_DONTWAIT);
+      int64_t r = recv (fd, &buffer[idx], len-idx, MSG_DONTWAIT);
 #endif
-
-         // Return error immediately if an error is detected. Reading zero
-         // bytes from a socket that caused a select() to return means
-         // that the other side has disconnected.
-         if (netcode_util_errno ()) {
-            if (idx) {
-               return idx;
-            }
-            return -1;
-         }
-         if (r == -1) {
-            if (idx) {
-               return idx;
-            }
-            return -1;
-         }
-         if (r ==  0) {
-            if (idx) {
-               return idx;
-            }
-            return -1;
-         }
-
-         idx += (uint32_t)r;
-         // NETCODE_UTIL_LOG ("read %zu bytes\n", idx);
-      }
-      if (selresult==0) {
-         countdown--;
-         continue;
-      }
-      if (selresult<0) {
+      if (r < 0 && errno != EWOULDBLOCK && errno != EAGAIN) {
          return -1;
       }
-   } while (idx<len && countdown);
+      if (r > 0) {
+         idx += (uint32_t)r;
+      }
+      now = time (NULL);
+      // NETCODE_UTIL_LOG ("read %zu bytes\n", idx);
+   } while (idx<len && now < expiry);
    return idx;
 }
 

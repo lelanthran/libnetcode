@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <time.h>
 
 #include "netcode_util.h"
 #include "netcode_tcp.h"
@@ -63,13 +64,15 @@ static int tcp_test (void)
 
    printf ("SERVER-TCP: Waiting for incoming data (max %i seconds) ... ", TIMEOUT);
 
-   if ((nbytes = netcode_tcp_read (clientfd, rx, rxlen, TIMEOUT))!=expected_len) {
+   time_t first = time (NULL);
+   if ((nbytes = netcode_tcp_read (clientfd, rx, expected_len, TIMEOUT))!=expected_len) {
       NETCODE_UTIL_LOG ("Failed to receive %u bytes, got %" PRIi64 " instead.\n",
                          expected_len, nbytes);
       goto errorexit;
    }
+   time_t second = time (NULL);
 
-   printf ("SERVER-TCP: received %" PRIi64 " bytes [%s].\n", nbytes, rx);
+   printf ("SERVER-TCP: received %" PRIi64 " bytes [%s] %li.\n", nbytes, rx, second - first);
 
    if ((strcmp (rx, NETCODE_TEST_TCP_REQUEST))!=0) {
       NETCODE_UTIL_LOG ("Unexpected request: expected [%s], got [%s] instead.\n",
