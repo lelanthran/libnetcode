@@ -241,7 +241,7 @@ errorexit:
 
 static int64_t netcode_udp_send_single (socket_t fd,
                                         const char *remote_host, uint16_t port,
-                                        void *buf, uint32_t buflen)
+                                        const void *buf, uint32_t buflen)
 {
    int64_t txed = 0;
    int flags = 0;
@@ -287,7 +287,7 @@ static int64_t netcode_udp_send_single (socket_t fd,
 
 int64_t netcode_udp_senda (socket_t fd, const char *remote_host, uint16_t port,
                            uint32_t nbuffers,
-                           void **buffers, uint32_t *buffer_lengths)
+                           const void **buffers, uint32_t *buffer_lengths)
 {
    uint8_t *txbuf = NULL;
    uint32_t txbuf_len = 0;
@@ -313,7 +313,7 @@ int64_t netcode_udp_senda (socket_t fd, const char *remote_host, uint16_t port,
 }
 
 int64_t netcode_udp_send (socket_t fd, const char *remote_host, uint16_t port,
-                          void *buf1, uint32_t buflen1,
+                          const void *buf1, uint32_t buflen1,
                           ...)
 {
    va_list ap;
@@ -324,15 +324,15 @@ int64_t netcode_udp_send (socket_t fd, const char *remote_host, uint16_t port,
 }
 
 int64_t netcode_udp_sendv (socket_t fd, const char *remote_host, uint16_t port,
-                           void *buf1, uint32_t buflen1,
+                           const void *buf1, uint32_t buflen1,
                            va_list ap)
 {
    int64_t nbytes = 0;
-   void **txbuffers = NULL;
+   const void **txbuffers = NULL;
    uint32_t *txbuffer_lengths = NULL;
    uint32_t nbuffers = 0;
    va_list vc;
-   void *tmp = buf1;
+   const void *tmp = buf1;
    uint32_t tmplen = 0;
 
    va_copy (vc, ap);

@@ -89,14 +89,14 @@ extern "C" {
    //       va_list pointer instead of literal parameters.
    int64_t netcode_udp_senda (socket_t fd, const char *remote_host, uint16_t port,
                               uint32_t nbuffers,
-                              void **buffers, uint32_t *buffer_lengths);
+                              const void **buffers, uint32_t *buffer_lengths);
 
    int64_t netcode_udp_send (socket_t fd, const char *remote_host, uint16_t port,
-                             void *buf1, uint32_t buflen1,
+                             const void *buf1, uint32_t buflen1,
                              ...);
 
    int64_t netcode_udp_sendv (socket_t fd, const char *remote_host, uint16_t port,
-                              void *buf1, uint32_t buflen1,
+                              const void *buf1, uint32_t buflen1,
                               va_list ap);
 
 #ifdef __cplusplus

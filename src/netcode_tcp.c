@@ -242,6 +242,11 @@ int64_t netcode_tcp_read (socket_t fd, void *buf, uint32_t len,
       }
       now = time (NULL);
       // NETCODE_UTIL_LOG ("read %zu bytes\n", idx);
+      struct timespec ts = {
+         0, 1000 * 1,
+      };
+      nanosleep (&ts, NULL);
+
    } while (idx<len && now < expiry);
    return idx;
 }

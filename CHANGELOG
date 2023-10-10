@@ -3,6 +3,7 @@
 2. Changed accept4() to SOCK_NONBLOCK so that signal interrupt causes an error
 return.
 3. Multiple fixes for Windows.
+4. Changes implementation of tcp_send() to remove kernel context switches.
 
 # v1.0.3 - Sun 09 Jan 2022 00:06:25 SAST
 1. Added support for enumerating all the interfaces on Linux. Still need to
