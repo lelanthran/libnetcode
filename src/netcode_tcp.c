@@ -1,3 +1,8 @@
+/* ********************************************************
+ * Copyright ©2020 Lelanthran Manickum, All rights reserved
+ * This project  is licensed under the GPLv3.  See the file
+ * LICENSE for more information.
+ */
 
 #include <stdio.h>
 #include <errno.h>
@@ -225,6 +230,9 @@ int64_t netcode_tcp_read (socket_t fd, void *buf, uint32_t len,
    unsigned char *buffer = buf;
    time_t now = time (NULL);
    time_t expiry = time (NULL) + timeout;
+   static const struct timespec ts = {
+      0, 0,
+   };
    SAFETY_CHECK;
    // NETCODE_UTIL_LOG ("Attempting to read %zu bytes\n", len);
    do {
@@ -245,9 +253,6 @@ int64_t netcode_tcp_read (socket_t fd, void *buf, uint32_t len,
       }
       now = time (NULL);
       // NETCODE_UTIL_LOG ("read %zu bytes\n", idx);
-      struct timespec ts = {
-         0, 1000 * 1,
-      };
       nanosleep (&ts, NULL);
    } while (idx<len && now < expiry);
    return idx;
