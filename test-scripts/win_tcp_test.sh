@@ -1,5 +1,8 @@
 #!/bin/bash
 
+export DIRNAME="`dirname $0`"
+pushd $DIRNAME
+
 if [ `uname -a | grep -ci linux` -gt 0 ]; then
    export PREFIX=wine
 fi
