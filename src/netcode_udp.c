@@ -120,8 +120,7 @@ size_t netcode_udp_wait (int fd, char **remote_host, uint16_t *remote_port,
    bool error = true;
    size_t retval = (size_t)-1;
 
-   char rhost[21];
-   struct timeval tv = { timeout , 0 };
+   struct timeval tv = { (long int)timeout , 0 };
    int error_code = 0;
    socklen_t error_code_len = sizeof error_code;
    struct sockaddr_in addr_remote;

@@ -89,11 +89,15 @@ int netcode_tcp_server (size_t port)
     * 4. Call accept() to get the clients connection.
     */
    SAFETY_CHECK;
+
+   if (port >= 0xffff)
+      return -1;
+
    struct sockaddr_in addr;
 
    addr.sin_family = AF_INET;
    addr.sin_addr.s_addr = INADDR_ANY;
-   addr.sin_port = htons (port);
+   addr.sin_port = htons ((uint16_t)port);
    int fd = -1;
    if (port==0) {
       return -1;
@@ -125,7 +129,7 @@ int netcode_tcp_accept (int fd, size_t timeout, char **addr, uint16_t *port)
 
    memset(&ret, 0xff, sizeof ret);
 
-   struct timeval tv = { timeout , 0 };
+   struct timeval tv = { (long int)timeout , 0 };
    fd_set fds[3];
    for (size_t i=0; i<sizeof fds/sizeof fds[0]; i++) {
       FD_ZERO (&fds[i]);
@@ -169,11 +173,14 @@ int netcode_tcp_connect (const char *server, size_t port)
     * 2. Call connect() to connect to a remote server.
     */
    SAFETY_CHECK;
+   if (port >= 0xffff)
+      return -1;
+
    // Resolving server name
    struct hostent *serv_addr = gethostbyname (server);
    struct sockaddr_in addr;
    addr.sin_family = AF_INET;
-   addr.sin_port = htons (port);
+   addr.sin_port = htons ((uint16_t)port);
    addr.sin_addr.s_addr = inet_addr (server);
 
    if (!serv_addr) {
@@ -203,13 +210,13 @@ size_t netcode_tcp_write (int fd, const void *buf, size_t len)
    // NETCODE_UTIL_LOG ("sending %zu bytes\n", len);
    ssize_t retval = SEND (fd, buf, len);
    if (retval<0) return (size_t)-1;
-   return retval;
+   return (size_t)retval;
 }
 
 size_t netcode_tcp_read (int fd, void *buf, size_t len, size_t timeout)
 {
    size_t idx = 0;
-   struct timeval tv = { timeout , 0 };
+   struct timeval tv = { (long int)timeout , 0 };
    unsigned char *buffer = buf;
    int countdown = 2;
    int error_code = 0;
